@@ -519,6 +519,9 @@
     let touchActive = false;
     let touchStartY = 0;
     let touchStartProgress = 0;
+    let touchGestureStartY = 0;
+    let touchGestureLastY = 0;
+    let mobileMomentumRaf = 0;
     let currentPull = 0;
     let mobileArrivalArmed = true;
     let mobileArrivalRunning = false;
@@ -712,6 +715,7 @@
     function cleanupGlyphPull() {
       cancelAnimationFrame(releaseRaf);
       cancelAnimationFrame(autoRaf);
+      stopMobileMomentumWatch();
       releaseRaf = 0;
       autoRaf = 0;
 
@@ -802,130 +806,63 @@
       autoRaf = requestAnimationFrame(frame);
     }
 
-    let desktopMouseCandidate = false;
-    let desktopMouseActive = false;
-    let desktopMouseStartY = 0;
+    let lastDesktopY = window.scrollY || 0;
 
-    let desktopWheelPull = 0;
-    let desktopWheelReleaseTimer = null;
-    let desktopWheelHoldTimer = null;
+    function desktopShouldTrigger() {
+      if (window.innerWidth <= 980) return false;
+      if (autoSequenceRunning || touchActive) return false;
 
-    function isDesktopViewport() {
-      return window.innerWidth > 980;
+      return getScrollProgress() >= 0.78;
     }
 
-    function canStartDesktopPull() {
-      return (
-        isDesktopViewport() &&
-        getScrollProgress() >= 0.72 &&
-        !touchActive &&
-        !mobileArrivalRunning
-      );
+    function triggerDesktopEffect() {
+      if (!desktopShouldTrigger() || !desktopArmed) return;
+      desktopArmed = false;
+      autoPullHoldRelease();
     }
 
-    // Mouse: drag upward to pull the glyphs toward you. Holding the mouse
-    // button freezes the exact current pull; releasing springs back.
-    window.addEventListener("mousedown", (event) => {
-      if (event.button !== 0 || !canStartDesktopPull()) return;
+    function handleDesktopScroll() {
+      if (window.innerWidth <= 980) return;
 
-      desktopMouseCandidate = true;
-      desktopMouseActive = false;
-      desktopMouseStartY = event.clientY;
-    });
+      const y = window.scrollY || window.pageYOffset || 0;
+      const movingDown = y > lastDesktopY + 1;
+      lastDesktopY = y;
 
-    window.addEventListener("mousemove", (event) => {
-      if (!desktopMouseCandidate) return;
-
-      const upwardPull = desktopMouseStartY - event.clientY;
-
-      if (!desktopMouseActive && upwardPull > 4) {
-        desktopMouseActive = true;
-        desktopArmed = false;
-        ensureOverlay();
+      if (movingDown && desktopShouldTrigger()) {
+        triggerDesktopEffect();
       }
 
-      if (!desktopMouseActive) return;
-
-      event.preventDefault();
-
-      const pull = clamp(upwardPull / 120, 0, 1);
-      setPullProgress(pull);
-    });
-
-    function finishDesktopMousePull() {
-      if (!desktopMouseCandidate) return;
-
-      const wasActive = desktopMouseActive;
-      desktopMouseCandidate = false;
-      desktopMouseActive = false;
-
-      if (wasActive && overlayEl) {
-        springRelease(currentPull);
+      if (getScrollProgress() <= DESKTOP_REARM_PROGRESS) {
+        desktopArmed = true;
       }
     }
 
-    window.addEventListener("mouseup", finishDesktopMousePull);
-    window.addEventListener("blur", finishDesktopMousePull);
+    window.addEventListener("scroll", handleDesktopScroll, { passive: true });
 
-    // Trackpad / wheel: scrolling downward in the end-zone progressively pulls
-    // the letters closer. When the gesture stops, hold briefly, then release.
     window.addEventListener(
       "wheel",
       (event) => {
-        if (!canStartDesktopPull()) return;
-
-        if (event.deltaY < 0) {
-          if (overlayEl && desktopWheelPull > 0) {
-            springRelease(currentPull);
-          }
-          desktopWheelPull = 0;
-          return;
-        }
-
-        if (event.deltaY === 0) return;
-
-        desktopArmed = false;
-
-        if (!overlayEl) {
-          ensureOverlay();
-        }
-
-        const delta = Math.min(44, Math.abs(event.deltaY));
-        desktopWheelPull = clamp(
-          desktopWheelPull + delta / 170,
-          0,
-          1
-        );
-
-        setPullProgress(desktopWheelPull);
-
-        clearTimeout(desktopWheelReleaseTimer);
-        clearTimeout(desktopWheelHoldTimer);
-
-        desktopWheelReleaseTimer = setTimeout(() => {
-          if (!overlayEl || desktopMouseActive || touchActive) return;
-
-          desktopWheelHoldTimer = setTimeout(() => {
-            if (overlayEl) {
-              springRelease(currentPull);
-            }
-            desktopWheelPull = 0;
-          }, 150);
-        }, 90);
-      },
-      { passive: true }
-    );
-
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (getScrollProgress() <= DESKTOP_REARM_PROGRESS) {
-          desktopArmed = true;
-          desktopWheelPull = 0;
+        if (window.innerWidth <= 980) return;
+        if (event.deltaY > 0 && getScrollProgress() >= 0.72) {
+          triggerDesktopEffect();
         }
       },
       { passive: true }
     );
+
+    window.addEventListener("keydown", (event) => {
+      if (window.innerWidth <= 980) return;
+      if (
+        ["ArrowDown", "PageDown", "End", " "].includes(event.key) &&
+        getScrollProgress() >= 0.72
+      ) {
+        setTimeout(triggerDesktopEffect, 0);
+      }
+    });
+
+    window.addEventListener("load", () => {
+      lastDesktopY = window.scrollY || 0;
+    });
 
     function mobileAutoArrival() {
       if (
@@ -994,20 +931,61 @@
 
     window.addEventListener("scroll", handleMobileScrollArrival, { passive: true });
 
+    function stopMobileMomentumWatch() {
+      if (mobileMomentumRaf) {
+        cancelAnimationFrame(mobileMomentumRaf);
+        mobileMomentumRaf = 0;
+      }
+    }
+
+    function watchMobileMomentumArrival() {
+      if (!isMobileTouchViewport()) return;
+
+      stopMobileMomentumWatch();
+
+      const started = performance.now();
+      const timeoutMs = 1100;
+
+      function frame(now) {
+        if (!mobileArrivalArmed || glyphPullRunning || touchActive) {
+          mobileMomentumRaf = 0;
+          return;
+        }
+
+        const progress = getScrollProgress();
+
+        if (progress >= 0.80) {
+          mobileArrivalArmed = false;
+          mobileMomentumRaf = 0;
+          mobileAutoArrival();
+          return;
+        }
+
+        if (now - started < timeoutMs) {
+          mobileMomentumRaf = requestAnimationFrame(frame);
+        } else {
+          mobileMomentumRaf = 0;
+        }
+      }
+
+      mobileMomentumRaf = requestAnimationFrame(frame);
+    }
+
     window.addEventListener(
       "touchstart",
       (event) => {
         if (!hasTouchInput()) return;
         if (event.touches.length !== 1) return;
 
+        stopMobileMomentumWatch();
+
         touchStartProgress = getScrollProgress();
+        touchGestureStartY = event.touches[0].clientY;
+        touchGestureLastY = touchGestureStartY;
         touchCandidate =
           touchStartProgress >= (window.innerWidth <= 980 ? 0.52 : 0.72);
         touchActive = false;
-
-        if (touchCandidate) {
-          touchStartY = event.touches[0].clientY;
-        }
+        touchStartY = touchGestureStartY;
       },
       { passive: true }
     );
@@ -1015,9 +993,12 @@
     window.addEventListener(
       "touchmove",
       (event) => {
-        if (!touchCandidate || event.touches.length !== 1) return;
+        if (event.touches.length !== 1) return;
 
         const y = event.touches[0].clientY;
+        touchGestureLastY = y;
+
+        if (!touchCandidate) return;
         const upwardPull = touchStartY - y;
         const liveProgress = getScrollProgress();
 
@@ -1032,6 +1013,7 @@
           )
         ) {
           touchActive = true;
+          stopMobileMomentumWatch();
           mobileArrivalArmed = false;
           // Rebase the gesture at the activation point so the pull begins
           // immediately and naturally instead of jumping to a large value.
@@ -1053,14 +1035,27 @@
     );
 
     function finishTouchPull() {
-      if (!touchCandidate) return;
-
+      const wasCandidate = touchCandidate;
       const wasActive = touchActive;
+      const upwardSwipe = touchGestureStartY - touchGestureLastY;
+
       touchCandidate = false;
       touchActive = false;
 
       if (wasActive && overlayEl) {
         springRelease(currentPull);
+        return;
+      }
+
+      if (
+        isMobileTouchViewport() &&
+        upwardSwipe > 24 &&
+        !glyphPullRunning &&
+        mobileArrivalArmed
+      ) {
+        watchMobileMomentumArrival();
+      } else if (!wasCandidate) {
+        stopMobileMomentumWatch();
       }
     }
 
