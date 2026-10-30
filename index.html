@@ -784,21 +784,30 @@
 
       const progress = getScrollProgress();
 
-      if (!releasing) {
-        const rawTension =
-          (progress - TYPO_TENSION_START) /
-          (TYPO_RELEASE_AT - TYPO_TENSION_START);
+      if (progress <= TYPO_REARM_BELOW) {
+        releaseArmed = true;
+      }
 
-        applyTension(smoothstep01(rawTension));
+      if (!releasing) {
+        /*
+          Once a release has fired, keep the typography settled at the very
+          bottom. It only becomes "grabbable" again after the user scrolls
+          back above the re-arm point and approaches the tension zone again.
+        */
+        if (!releaseArmed && progress >= TYPO_RELEASE_AT) {
+          applyTension(0);
+        } else {
+          const rawTension =
+            (progress - TYPO_TENSION_START) /
+            (TYPO_RELEASE_AT - TYPO_TENSION_START);
+
+          applyTension(smoothstep01(rawTension));
+        }
       }
 
       if (progress >= TYPO_RELEASE_AT && releaseArmed && !releasing) {
         triggerRelease();
         releaseArmed = false;
-      }
-
-      if (progress <= TYPO_REARM_BELOW) {
-        releaseArmed = true;
       }
     }
 
