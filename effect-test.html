@@ -506,6 +506,7 @@
     const hasTouchInput = () => (navigator.maxTouchPoints || 0) > 0;
     const isMobileTouchViewport = () =>
       hasTouchInput() && window.innerWidth <= 980;
+    const isTouchViewport = () => isMobileTouchViewport();
 
     let overlayEl = null;
     let glyphStates = [];
