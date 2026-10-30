@@ -518,6 +518,8 @@
     let touchActive = false;
     let touchStartY = 0;
     let touchStartProgress = 0;
+    let touchFocusX = window.innerWidth * 0.5;
+    let touchFocusY = window.innerHeight * 0.5;
     let mobileScrollArmed = true;
     let currentPull = 0;
 
@@ -617,11 +619,15 @@
       return el;
     }
 
-    function getPullVector(glyph, index, total) {
+    function getPullVector(
+      glyph,
+      index,
+      total,
+      centerX = window.innerWidth * 0.5,
+      centerY = window.innerHeight * 0.48
+    ) {
       const cx = glyph.rect.left + glyph.rect.width * 0.5;
       const cy = glyph.rect.top + glyph.rect.height * 0.5;
-      const centerX = window.innerWidth * 0.5;
-      const centerY = window.innerHeight * 0.48;
 
       let vx = cx - centerX;
       let vy = cy - centerY;
@@ -636,9 +642,9 @@
 
       const mobile = isTouchViewport() || window.innerWidth <= 980;
 
-      const radial = mobile ? 78 : 118;
-      const scatterX = mobile ? 48 : 76;
-      const scatterY = mobile ? 32 : 50;
+      const radial = mobile ? 78 : 158;
+      const scatterX = mobile ? 48 : 108;
+      const scatterY = mobile ? 32 : 72;
 
       const dx = vx * radial + a * scatterX + c * scatterX * 0.28;
       const dy = vy * radial * 0.68 + b * scatterY;
@@ -671,7 +677,7 @@
         const el = makeGlyphElement(glyph);
         const vector = getPullVector(glyph, index, total);
         overlayEl.appendChild(el);
-        return { el, ...vector };
+        return { el, glyph, index, total, ...vector };
       });
 
       heroEl.classList.add("glyph-pull-source-hidden");
@@ -692,18 +698,37 @@
       const p = easedPull(progress);
 
       glyphStates.forEach((g) => {
-        const x = g.dx * p;
-        const y = g.dy * p;
-        const visualScale = 1 + (g.scale - 1) * p;
+        let dx = g.dx;
+        let dy = g.dy;
+        let scale = g.scale;
+        let rotate = g.rotate;
+
+        if (touchActive && isTouchViewport()) {
+          const liveVector = getPullVector(
+            g.glyph,
+            g.index,
+            g.total,
+            touchFocusX,
+            touchFocusY
+          );
+          dx = liveVector.dx;
+          dy = liveVector.dy;
+          scale = liveVector.scale;
+          rotate = liveVector.rotate;
+        }
+
+        const x = dx * p;
+        const y = dy * p;
+        const visualScale = 1 + (scale - 1) * p;
         const renderScale = parseFloat(g.el.dataset.renderScale || "1");
         const cssScale = visualScale / renderScale;
-        const rotate = g.rotate * p;
+        const rotation = rotate * p;
 
         // Pure 2D transform keeps text significantly sharper than perspective/
         // translateZ scaling in Chromium while preserving the "coming closer" read.
         g.el.style.transform =
           `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) ` +
-          `scale(${cssScale.toFixed(4)}) rotate(${rotate.toFixed(2)}deg)`;
+          `scale(${cssScale.toFixed(4)}) rotate(${rotation.toFixed(2)}deg)`;
       });
     }
 
@@ -869,8 +894,12 @@
 
       const progress = getScrollProgress();
 
+      const atHardBottom =
+        progress >= 0.995 ||
+        (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 3);
+
       if (
-        progress >= 0.74 &&
+        atHardBottom &&
         mobileScrollArmed &&
         !touchActive &&
         !glyphPullRunning &&
@@ -906,6 +935,9 @@
         touchCandidate = touchStartProgress >= 0.52;
         touchActive = false;
 
+        touchFocusX = event.touches[0].clientX;
+        touchFocusY = event.touches[0].clientY;
+
         if (touchCandidate) {
           touchStartY = event.touches[0].clientY;
         }
@@ -919,6 +951,9 @@
         if (!touchCandidate || event.touches.length !== 1) return;
 
         const y = event.touches[0].clientY;
+        touchFocusX = event.touches[0].clientX;
+        touchFocusY = y;
+
         const upwardPull = touchStartY - y;
         const liveProgress = getScrollProgress();
 
