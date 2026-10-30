@@ -742,6 +742,33 @@
       releaseRaf = requestAnimationFrame(frame);
     }
 
+    function flashDesktopTriggerMarker() {
+      if (isTouchViewport()) return;
+      let marker = document.getElementById("desktop-effect-marker");
+      if (!marker) {
+        marker = document.createElement("div");
+        marker.id = "desktop-effect-marker";
+        marker.textContent = "GLYPH";
+        Object.assign(marker.style, {
+          position: "fixed",
+          top: "14px",
+          right: "14px",
+          zIndex: "10001",
+          font: "600 11px/1 Arial, sans-serif",
+          letterSpacing: "0.12em",
+          color: "#fff",
+          opacity: "0.82",
+          pointerEvents: "none"
+        });
+        document.body.appendChild(marker);
+      }
+      marker.style.display = "block";
+      clearTimeout(marker._hideTimer);
+      marker._hideTimer = setTimeout(() => {
+        marker.style.display = "none";
+      }, 350);
+    }
+
     function autoPullHoldRelease() {
       if (
         autoSequenceRunning ||
@@ -750,14 +777,15 @@
       ) return;
 
       autoSequenceRunning = true;
+      flashDesktopTriggerMarker();
       if (!ensureOverlay()) {
         autoSequenceRunning = false;
         return;
       }
 
       const start = performance.now();
-      const pullMs = 210;
-      const holdMs = 150;
+      const pullMs = 180;
+      const holdMs = 190;
       const totalBeforeRelease = pullMs + holdMs;
 
       function frame(now) {
@@ -785,34 +813,65 @@
       autoRaf = requestAnimationFrame(frame);
     }
 
-    function checkDesktopTrigger() {
-      if (isTouchViewport()) return;
+    let lastDesktopY = window.scrollY || 0;
+
+    function desktopShouldTrigger() {
+      if (isTouchViewport()) return false;
+      if (autoSequenceRunning || touchActive) return false;
 
       const progress = getScrollProgress();
+      return progress >= 0.78;
+    }
 
-      if (progress >= DESKTOP_TRIGGER_PROGRESS) {
-        if (desktopArmed) {
-          autoPullHoldRelease();
-          desktopArmed = false;
-        }
-      } else if (progress <= DESKTOP_REARM_PROGRESS) {
+    function triggerDesktopEffect() {
+      if (!desktopShouldTrigger() || !desktopArmed) return;
+      desktopArmed = false;
+      autoPullHoldRelease();
+    }
+
+    function handleDesktopScroll() {
+      if (isTouchViewport()) return;
+
+      const y = window.scrollY || window.pageYOffset || 0;
+      const movingDown = y > lastDesktopY + 1;
+      lastDesktopY = y;
+
+      if (movingDown && desktopShouldTrigger()) {
+        triggerDesktopEffect();
+      }
+
+      if (getScrollProgress() <= DESKTOP_REARM_PROGRESS) {
         desktopArmed = true;
       }
     }
 
-    // Extra desktop safety: a downward wheel/trackpad gesture near the page end
-    // triggers the effect even if the browser reports an unusual scroll range.
+    window.addEventListener("scroll", handleDesktopScroll, { passive: true });
+
     window.addEventListener(
       "wheel",
       (event) => {
-        if (isTouchViewport() || event.deltaY <= 0) return;
-        if (getScrollProgress() >= 0.84 && desktopArmed) {
-          autoPullHoldRelease();
-          desktopArmed = false;
+        if (isTouchViewport()) return;
+        if (event.deltaY > 0 && getScrollProgress() >= 0.72) {
+          triggerDesktopEffect();
         }
       },
       { passive: true }
     );
+
+    // Keyboard/PageDown/End fallback.
+    window.addEventListener("keydown", (event) => {
+      if (isTouchViewport()) return;
+      if (
+        ["ArrowDown", "PageDown", "End", " "].includes(event.key) &&
+        getScrollProgress() >= 0.72
+      ) {
+        setTimeout(triggerDesktopEffect, 0);
+      }
+    });
+
+    window.addEventListener("load", () => {
+      lastDesktopY = window.scrollY || 0;
+    });
 
     window.addEventListener(
       "touchstart",
@@ -879,28 +938,6 @@
 
     window.addEventListener("touchend", finishTouchPull, { passive: true });
     window.addEventListener("touchcancel", finishTouchPull, { passive: true });
-
-    window.addEventListener("scroll", checkDesktopTrigger, { passive: true });
-    window.addEventListener("load", checkDesktopTrigger);
-
-    // Fallback for browsers/trackpads that report unusual wheel or pointer media.
-    // If the page is clearly in the final zone on a desktop-sized viewport,
-    // trigger once even without a matching wheel event.
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (
-          window.innerWidth > 980 &&
-          getScrollProgress() >= 0.86 &&
-          desktopArmed &&
-          !autoSequenceRunning
-        ) {
-          autoPullHoldRelease();
-          desktopArmed = false;
-        }
-      },
-      { passive: true }
-    );
 
     window.addEventListener(
       "resize",
