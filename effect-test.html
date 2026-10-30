@@ -93,7 +93,7 @@
     }
 
     body {
-      height: 250vh;
+      height: 185vh;
       background: #000;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -503,8 +503,8 @@
   const DESKTOP_REARM_PROGRESS = 0.82;
 
   // Touch: once the page is near the end, the next upward finger pull controls the effect.
-  const TOUCH_ARM_PROGRESS = 0.88;
-  const TOUCH_PULL_DISTANCE = 110;
+  const TOUCH_ARM_PROGRESS = 0.70;
+  const TOUCH_PULL_DISTANCE = 82;
 
   if (ENABLE_GLYPH_PULL_TEST) {
     const heroEl = document.querySelector(".hero");
@@ -523,6 +523,7 @@
     let touchCandidate = false;
     let touchActive = false;
     let touchStartY = 0;
+    let touchStartProgress = 0;
     let currentPull = 0;
 
     function clamp(value, min, max) {
@@ -829,7 +830,8 @@
         if (!coarsePointer.matches || reduceMotion.matches) return;
         if (event.touches.length !== 1) return;
 
-        touchCandidate = getScrollProgress() >= TOUCH_ARM_PROGRESS;
+        touchStartProgress = getScrollProgress();
+        touchCandidate = touchStartProgress >= 0.52;
         touchActive = false;
 
         if (touchCandidate) {
@@ -846,11 +848,19 @@
 
         const y = event.touches[0].clientY;
         const upwardPull = touchStartY - y;
+        const liveProgress = getScrollProgress();
 
-        // Let tiny finger motion remain normal scrolling. Once the user clearly
-        // pulls upward at the page end, the gesture becomes the typography pull.
-        if (!touchActive && upwardPull > 7) {
+        // Activate during the SAME first gesture as soon as scrolling reaches
+        // the end-zone. The user no longer needs to lift and drag a second time.
+        if (
+          !touchActive &&
+          upwardPull > 5 &&
+          (liveProgress >= TOUCH_ARM_PROGRESS || touchStartProgress >= TOUCH_ARM_PROGRESS)
+        ) {
           touchActive = true;
+          // Rebase the gesture at the activation point so the pull begins
+          // immediately and naturally instead of jumping to a large value.
+          touchStartY = y + 5;
           ensureOverlay();
         }
 
@@ -858,7 +868,7 @@
 
         event.preventDefault();
 
-        const pull = clamp(upwardPull / TOUCH_PULL_DISTANCE, 0, 1);
+        const pull = clamp((touchStartY - y) / TOUCH_PULL_DISTANCE, 0, 1);
         setPullProgress(pull);
         // Holding the finger in place simply leaves this exact transform frozen.
       },
