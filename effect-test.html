@@ -519,6 +519,8 @@
     let touchStartY = 0;
     let touchStartProgress = 0;
     let currentPull = 0;
+    let mobileArrivalArmed = true;
+    let mobileArrivalRunning = false;
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -720,6 +722,7 @@
       currentPull = 0;
       glyphPullRunning = false;
       autoSequenceRunning = false;
+      mobileArrivalRunning = false;
       heroEl.classList.remove("glyph-pull-source-hidden");
     }
 
@@ -857,6 +860,73 @@
       lastDesktopY = window.scrollY || 0;
     });
 
+    function mobileAutoArrival() {
+      if (
+        !isTouchViewport() ||
+        touchActive ||
+        touchCandidate ||
+        glyphPullRunning ||
+        mobileArrivalRunning
+      ) return;
+
+      mobileArrivalRunning = true;
+
+      if (!ensureOverlay()) {
+        mobileArrivalRunning = false;
+        return;
+      }
+
+      const start = performance.now();
+      const pullMs = 145;
+      const holdMs = 120;
+
+      function frame(now) {
+        const elapsed = now - start;
+
+        if (elapsed <= pullMs) {
+          const t = clamp(elapsed / pullMs, 0, 1);
+          const fastEase = 1 - Math.pow(1 - t, 3);
+          setPullProgress(fastEase);
+          autoRaf = requestAnimationFrame(frame);
+          return;
+        }
+
+        setPullProgress(1);
+
+        if (elapsed < pullMs + holdMs) {
+          autoRaf = requestAnimationFrame(frame);
+          return;
+        }
+
+        autoRaf = 0;
+        mobileArrivalRunning = false;
+        springRelease(1);
+      }
+
+      autoRaf = requestAnimationFrame(frame);
+    }
+
+    function handleMobileScrollArrival() {
+      if (!isTouchViewport()) return;
+
+      const progress = getScrollProgress();
+
+      if (
+        progress >= 0.93 &&
+        mobileArrivalArmed &&
+        !touchActive &&
+        !touchCandidate &&
+        !glyphPullRunning
+      ) {
+        mobileArrivalArmed = false;
+        mobileAutoArrival();
+      } else if (progress <= 0.82) {
+        mobileArrivalArmed = true;
+      }
+    }
+
+    window.addEventListener("scroll", handleMobileScrollArrival, { passive: true });
+
     window.addEventListener(
       "touchstart",
       (event) => {
@@ -891,6 +961,7 @@
           (liveProgress >= TOUCH_ARM_PROGRESS || touchStartProgress >= TOUCH_ARM_PROGRESS)
         ) {
           touchActive = true;
+          mobileArrivalArmed = false;
           // Rebase the gesture at the activation point so the pull begins
           // immediately and naturally instead of jumping to a large value.
           touchStartY = y + 5;
