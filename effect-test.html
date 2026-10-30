@@ -518,9 +518,6 @@
     let touchActive = false;
     let touchStartY = 0;
     let touchStartProgress = 0;
-    let touchGestureStartY = 0;
-    let touchGestureLastY = 0;
-    let mobileMomentumRaf = 0;
     let currentPull = 0;
 
     function clamp(value, min, max) {
@@ -860,56 +857,13 @@
       lastDesktopY = window.scrollY || 0;
     });
 
-    function stopMobileMomentumWatch() {
-      if (mobileMomentumRaf) {
-        cancelAnimationFrame(mobileMomentumRaf);
-        mobileMomentumRaf = 0;
-      }
-    }
-
-    function watchMobileMomentumArrival() {
-      if (!isTouchViewport()) return;
-
-      stopMobileMomentumWatch();
-
-      const started = performance.now();
-      const timeoutMs = 1100;
-
-      function frame(now) {
-        if (glyphPullRunning || touchActive) {
-          mobileMomentumRaf = 0;
-          return;
-        }
-
-        const progress = getScrollProgress();
-
-        if (progress >= 0.80) {
-          mobileMomentumRaf = 0;
-          autoPullHoldRelease();
-          return;
-        }
-
-        if (now - started < timeoutMs) {
-          mobileMomentumRaf = requestAnimationFrame(frame);
-        } else {
-          mobileMomentumRaf = 0;
-        }
-      }
-
-      mobileMomentumRaf = requestAnimationFrame(frame);
-    }
-
     window.addEventListener(
       "touchstart",
       (event) => {
         if (!isTouchViewport()) return;
         if (event.touches.length !== 1) return;
 
-        stopMobileMomentumWatch();
-
         touchStartProgress = getScrollProgress();
-        touchGestureStartY = event.touches[0].clientY;
-        touchGestureLastY = touchGestureStartY;
         touchCandidate = touchStartProgress >= 0.52;
         touchActive = false;
 
@@ -923,12 +877,9 @@
     window.addEventListener(
       "touchmove",
       (event) => {
-        if (event.touches.length !== 1) return;
+        if (!touchCandidate || event.touches.length !== 1) return;
 
         const y = event.touches[0].clientY;
-        touchGestureLastY = y;
-
-        if (!touchCandidate) return;
         const upwardPull = touchStartY - y;
         const liveProgress = getScrollProgress();
 
@@ -958,23 +909,14 @@
     );
 
     function finishTouchPull() {
-      const wasActive = touchActive;
-      const upwardSwipe = touchGestureStartY - touchGestureLastY;
+      if (!touchCandidate) return;
 
+      const wasActive = touchActive;
       touchCandidate = false;
       touchActive = false;
 
       if (wasActive && overlayEl) {
         springRelease(currentPull);
-        return;
-      }
-
-      if (
-        isTouchViewport() &&
-        upwardSwipe > 24 &&
-        !glyphPullRunning
-      ) {
-        watchMobileMomentumArrival();
       }
     }
 
