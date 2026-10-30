@@ -545,40 +545,51 @@
   }
 
   @media (max-width: 980px) {
+    .hero.typo-drag-active .line-1,
+    .hero.typo-drag-active .line-2,
+    .hero.typo-drag-active .line-3,
+    .hero.typo-drag-active .line-4,
+    .hero.typo-drag-active .line-5,
+    .hero.typo-drag-active .line-6,
+    .hero.typo-drag-active .line-7,
+    .hero.typo-drag-active .line-8 {
+      will-change: transform, opacity;
+    }
+
     @keyframes dragLine1 {
       0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      22%  { transform: translate3d(10px,-2px,0) scaleX(1.04) skewX(-3deg); letter-spacing: -0.07em; }
-      40%  { transform: translate3d(-6px,1px,0) scaleX(0.98) skewX(1.4deg); letter-spacing: -0.025em; }
+      22%  { transform: translate3d(10px,-2px,0) scaleX(1.04) skewX(-3deg); letter-spacing: -0.045em; }
+      40%  { transform: translate3d(-6px,1px,0) scaleX(0.98) skewX(1.4deg); letter-spacing: -0.045em; }
       100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
     }
     @keyframes dragLine2 {
       0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      24%  { transform: translate3d(16px,-3px,0) scaleX(1.055) skewX(-3.6deg); letter-spacing: -0.078em; }
-      44%  { transform: translate3d(-8px,2px,0) scaleX(0.975) skewX(1.6deg); letter-spacing: -0.022em; }
+      24%  { transform: translate3d(16px,-3px,0) scaleX(1.055) skewX(-3.6deg); letter-spacing: -0.045em; }
+      44%  { transform: translate3d(-8px,2px,0) scaleX(0.975) skewX(1.6deg); letter-spacing: -0.045em; }
       100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
     }
     @keyframes dragLine3 {
       0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      26%  { transform: translate3d(24px,-3px,0) scaleX(1.07) skewX(-4deg); letter-spacing: -0.085em; }
-      46%  { transform: translate3d(-10px,2px,0) scaleX(0.97) skewX(1.8deg); letter-spacing: -0.018em; }
+      26%  { transform: translate3d(24px,-3px,0) scaleX(1.07) skewX(-4deg); letter-spacing: -0.045em; }
+      46%  { transform: translate3d(-10px,2px,0) scaleX(0.97) skewX(1.8deg); letter-spacing: -0.045em; }
       100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
     }
     @keyframes dragLine4 {
       0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      28%  { transform: translate3d(30px,-4px,0) scaleX(1.085) skewX(-4.6deg); letter-spacing: -0.092em; }
-      48%  { transform: translate3d(-12px,2px,0) scaleX(0.965) skewX(2deg); letter-spacing: -0.015em; }
+      28%  { transform: translate3d(30px,-4px,0) scaleX(1.085) skewX(-4.6deg); letter-spacing: -0.045em; }
+      48%  { transform: translate3d(-12px,2px,0) scaleX(0.965) skewX(2deg); letter-spacing: -0.045em; }
       100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
     }
     @keyframes dragLine5 {
       0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      30%  { transform: translate3d(34px,-4px,0) scaleX(1.095) skewX(-5.2deg); letter-spacing: -0.10em; }
-      50%  { transform: translate3d(-13px,3px,0) scaleX(0.96) skewX(2.2deg); letter-spacing: -0.012em; }
+      30%  { transform: translate3d(34px,-4px,0) scaleX(1.095) skewX(-5.2deg); letter-spacing: -0.045em; }
+      50%  { transform: translate3d(-13px,3px,0) scaleX(0.96) skewX(2.2deg); letter-spacing: -0.045em; }
       100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
     }
     @keyframes dragLine6 {
       0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      30%  { transform: translate3d(38px,-5px,0) scaleX(1.105) skewX(-5.8deg); letter-spacing: -0.108em; }
-      50%  { transform: translate3d(-14px,3px,0) scaleX(0.955) skewX(2.4deg); letter-spacing: -0.010em; }
+      30%  { transform: translate3d(38px,-5px,0) scaleX(1.105) skewX(-5.8deg); letter-spacing: -0.045em; }
+      50%  { transform: translate3d(-14px,3px,0) scaleX(0.955) skewX(2.4deg); letter-spacing: -0.045em; }
       100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
     }
     @keyframes dragLine7 {
