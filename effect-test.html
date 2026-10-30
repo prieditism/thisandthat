@@ -497,25 +497,39 @@
 
 <script>
   const ENABLE_GLYPH_PULL_TEST = true;
-  const GLYPH_PULL_TRIGGER_PROGRESS = 0.965;
-  const GLYPH_PULL_REARM_PROGRESS = 0.90;
-  const GLYPH_PULL_DURATION_MS = 1150;
+
+  // Desktop: auto trigger before absolute bottom so wheel/trackpad always reaches it.
+  const DESKTOP_TRIGGER_PROGRESS = 0.91;
+  const DESKTOP_REARM_PROGRESS = 0.82;
+
+  // Touch: once the page is near the end, the next upward finger pull controls the effect.
+  const TOUCH_ARM_PROGRESS = 0.88;
+  const TOUCH_PULL_DISTANCE = 110;
 
   if (ENABLE_GLYPH_PULL_TEST) {
     const heroEl = document.querySelector(".hero");
     const sourceLines = Array.from(document.querySelectorAll(".hero .typing-line"));
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
 
-    let glyphPullArmed = true;
-    let glyphPullRunning = false;
     let overlayEl = null;
-    let cleanupTimer = null;
+    let glyphStates = [];
+    let glyphPullRunning = false;
+    let desktopArmed = true;
+    let autoSequenceRunning = false;
+    let releaseRaf = 0;
+    let autoRaf = 0;
 
-    function glyphClamp(value, min, max) {
+    let touchCandidate = false;
+    let touchActive = false;
+    let touchStartY = 0;
+    let currentPull = 0;
+
+    function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
     }
 
-    function getGlyphScrollProgress() {
+    function getScrollProgress() {
       const y = window.pageYOffset || window.scrollY || 0;
       const doc = document.documentElement;
       const body = document.body;
@@ -527,7 +541,7 @@
       );
 
       const maxScroll = Math.max(1, scrollHeight - window.innerHeight);
-      return glyphClamp(y / maxScroll, 0, 1);
+      return clamp(y / maxScroll, 0, 1);
     }
 
     function collectGlyphsFromElement(root) {
@@ -537,10 +551,9 @@
         NodeFilter.SHOW_TEXT,
         {
           acceptNode(node) {
-            if (!node.nodeValue || node.nodeValue.length === 0) {
-              return NodeFilter.FILTER_REJECT;
-            }
-            return NodeFilter.FILTER_ACCEPT;
+            return node.nodeValue && node.nodeValue.length
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_REJECT;
           }
         }
       );
@@ -599,181 +612,288 @@
     function getPullVector(glyph, index, total) {
       const cx = glyph.rect.left + glyph.rect.width * 0.5;
       const cy = glyph.rect.top + glyph.rect.height * 0.5;
+      const centerX = window.innerWidth * 0.5;
+      const centerY = window.innerHeight * 0.48;
 
-      const viewportCx = window.innerWidth * 0.5;
-      const viewportCy = window.innerHeight * 0.48;
-
-      let vx = cx - viewportCx;
-      let vy = cy - viewportCy;
-
+      let vx = cx - centerX;
+      let vy = cy - centerY;
       const length = Math.max(1, Math.hypot(vx, vy));
       vx /= length;
       vy /= length;
 
-      /*
-        Strong but deterministic per-glyph variation:
-        every character moves differently, while the shared radial component
-        still keeps the whole word-field coherent.
-      */
+      // Deterministic per-letter direction; never random between frames.
       const a = Math.sin(index * 1.91 + total * 0.137);
       const b = Math.cos(index * 2.47 + total * 0.091);
       const c = Math.sin(index * 0.83 + total * 0.053);
 
-      const mobile = window.innerWidth <= 980;
+      const mobile = coarsePointer.matches || window.innerWidth <= 980;
 
-      const radial = mobile ? 58 : 105;
-      const scatterX = mobile ? 34 : 68;
-      const scatterY = mobile ? 24 : 46;
+      const radial = mobile ? 54 : 88;
+      const scatterX = mobile ? 30 : 54;
+      const scatterY = mobile ? 20 : 36;
 
-      const dx = vx * radial + a * scatterX + c * scatterX * 0.28;
-      const dy = vy * radial * 0.68 + b * scatterY;
+      const dx = vx * radial + a * scatterX + c * scatterX * 0.25;
+      const dy = vy * radial * 0.62 + b * scatterY;
 
-      // Pull hard toward the viewer. Bigger scale variation makes the
-      // individual characters feel spatial rather than like a moving line.
-      const baseScale = mobile ? 1.52 : 1.82;
-      const scaleVariation = mobile ? 0.42 : 0.58;
+      const baseScale = mobile ? 1.48 : 1.62;
+      const scaleVariation = mobile ? 0.32 : 0.44;
       const scale = baseScale + ((a + 1) * 0.5) * scaleVariation;
 
       const z = mobile
-        ? 150 + ((b + 1) * 0.5) * 130
-        : 240 + ((b + 1) * 0.5) * 220;
+        ? 135 + ((b + 1) * 0.5) * 120
+        : 190 + ((b + 1) * 0.5) * 180;
 
-      const rotate = a * (mobile ? 7.5 : 11.0);
+      const rotate = a * (mobile ? 5.5 : 8.0);
 
       return { dx, dy, z, scale, rotate };
     }
 
-    function cleanupGlyphPull() {
-      if (cleanupTimer) {
-        clearTimeout(cleanupTimer);
-        cleanupTimer = null;
-      }
-
-      if (overlayEl) {
-        overlayEl.remove();
-        overlayEl = null;
-      }
-
-      heroEl.classList.remove("glyph-pull-source-hidden");
-      glyphPullRunning = false;
-    }
-
-    function triggerGlyphPull() {
-      if (glyphPullRunning || reduceMotion.matches) return;
+    function ensureOverlay() {
+      if (overlayEl) return true;
+      if (reduceMotion.matches) return false;
 
       const glyphData = [];
-
       sourceLines.forEach((line) => {
         glyphData.push(...collectGlyphsFromElement(line));
       });
 
-      if (!glyphData.length) return;
-
-      glyphPullRunning = true;
+      if (!glyphData.length) return false;
 
       overlayEl = document.createElement("div");
       overlayEl.id = "glyph-pull-overlay";
       document.body.appendChild(overlayEl);
 
       const total = glyphData.length;
-
-      glyphData.forEach((glyph, index) => {
+      glyphStates = glyphData.map((glyph, index) => {
         const el = makeGlyphElement(glyph);
+        const vector = getPullVector(glyph, index, total);
         overlayEl.appendChild(el);
-
-        const { dx, dy, z, scale, rotate } =
-          getPullVector(glyph, index, total);
-
-        const delay = Math.min(120, (index % 19) * 4.0);
-
-        el.animate(
-          [
-            {
-              transform:
-                "translate3d(0,0,0) scale(1) rotate(0deg)",
-              opacity: 1,
-              offset: 0
-            },
-            {
-              transform:
-                `translate3d(${(dx * 0.45).toFixed(2)}px,${(dy * 0.45).toFixed(2)}px,${(z * 0.38).toFixed(2)}px) ` +
-                `scale(${(1 + (scale - 1) * 0.48).toFixed(3)}) rotate(${(rotate * 0.5).toFixed(2)}deg)`,
-              opacity: 1,
-              offset: 0.14
-            },
-            {
-              transform:
-                `translate3d(${dx.toFixed(2)}px,${dy.toFixed(2)}px,${z.toFixed(2)}px) ` +
-                `scale(${scale.toFixed(3)}) rotate(${rotate.toFixed(2)}deg)`,
-              opacity: 0.99,
-              offset: 0.34
-            },
-            {
-              transform:
-                `translate3d(${(-dx * 0.28).toFixed(2)}px,${(-dy * 0.22).toFixed(2)}px,${(-z * 0.12).toFixed(2)}px) ` +
-                `scale(${(1 - (scale - 1) * 0.18).toFixed(3)}) rotate(${(-rotate * 0.36).toFixed(2)}deg)`,
-              opacity: 1,
-              offset: 0.58
-            },
-            {
-              transform:
-                `translate3d(${(dx * 0.12).toFixed(2)}px,${(dy * 0.09).toFixed(2)}px,${(z * 0.04).toFixed(2)}px) ` +
-                `scale(${(1 + (scale - 1) * 0.08).toFixed(3)}) rotate(${(rotate * 0.15).toFixed(2)}deg)`,
-              opacity: 1,
-              offset: 0.76
-            },
-            {
-              transform:
-                "translate3d(0,0,0) scale(1) rotate(0deg)",
-              opacity: 1,
-              offset: 1
-            }
-          ],
-          {
-            duration: GLYPH_PULL_DURATION_MS,
-            delay,
-            easing: "cubic-bezier(.16,.82,.18,1)",
-            fill: "both"
-          }
-        );
+        return { el, ...vector };
       });
 
-      /*
-        Hide the live layout only after every glyph has been measured and
-        duplicated, so there is no jump in line wrapping or element geometry.
-      */
-      requestAnimationFrame(() => {
-        heroEl.classList.add("glyph-pull-source-hidden");
-      });
-
-      cleanupTimer = setTimeout(
-        cleanupGlyphPull,
-        GLYPH_PULL_DURATION_MS + 140
-      );
+      heroEl.classList.add("glyph-pull-source-hidden");
+      glyphPullRunning = true;
+      return true;
     }
 
-    function checkGlyphPullTrigger() {
-      const progress = getGlyphScrollProgress();
+    function easedPull(p) {
+      const sign = p < 0 ? -1 : 1;
+      const x = clamp(Math.abs(p), 0, 1);
+      return sign * (1 - Math.pow(1 - x, 3));
+    }
 
-      if (progress >= GLYPH_PULL_TRIGGER_PROGRESS) {
-        if (glyphPullArmed) {
-          triggerGlyphPull();
-          glyphPullArmed = false;
+    function setPullProgress(progress) {
+      if (!ensureOverlay()) return;
+
+      currentPull = progress;
+      const p = easedPull(progress);
+
+      glyphStates.forEach((g) => {
+        const x = g.dx * p;
+        const y = g.dy * p;
+        const z = g.z * p;
+        const scale = 1 + (g.scale - 1) * p;
+        const rotate = g.rotate * p;
+
+        g.el.style.transform =
+          `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,${z.toFixed(2)}px) ` +
+          `scale(${scale.toFixed(3)}) rotate(${rotate.toFixed(2)}deg)`;
+      });
+    }
+
+    function cleanupGlyphPull() {
+      cancelAnimationFrame(releaseRaf);
+      cancelAnimationFrame(autoRaf);
+      releaseRaf = 0;
+      autoRaf = 0;
+
+      if (overlayEl) {
+        overlayEl.remove();
+        overlayEl = null;
+      }
+
+      glyphStates = [];
+      currentPull = 0;
+      glyphPullRunning = false;
+      autoSequenceRunning = false;
+      heroEl.classList.remove("glyph-pull-source-hidden");
+    }
+
+    function springRelease(from = currentPull) {
+      cancelAnimationFrame(releaseRaf);
+      cancelAnimationFrame(autoRaf);
+      autoRaf = 0;
+      autoSequenceRunning = false;
+
+      if (!overlayEl) return;
+
+      const start = performance.now();
+      const duration = 430;
+
+      function frame(now) {
+        const t = clamp((now - start) / duration, 0, 1);
+
+        // Damped spring: starts exactly at 'from', crosses slightly past zero,
+        // then settles quickly back in the original typography.
+        const spring =
+          Math.exp(-5.4 * t) * Math.cos(10.4 * t);
+
+        setPullProgress(from * spring);
+
+        if (t < 1) {
+          releaseRaf = requestAnimationFrame(frame);
+        } else {
+          cleanupGlyphPull();
         }
-      } else if (progress <= GLYPH_PULL_REARM_PROGRESS) {
-        glyphPullArmed = true;
+      }
+
+      releaseRaf = requestAnimationFrame(frame);
+    }
+
+    function autoPullHoldRelease() {
+      if (
+        autoSequenceRunning ||
+        touchActive ||
+        reduceMotion.matches ||
+        coarsePointer.matches
+      ) return;
+
+      autoSequenceRunning = true;
+      if (!ensureOverlay()) {
+        autoSequenceRunning = false;
+        return;
+      }
+
+      const start = performance.now();
+      const pullMs = 210;
+      const holdMs = 150;
+      const totalBeforeRelease = pullMs + holdMs;
+
+      function frame(now) {
+        const elapsed = now - start;
+
+        if (elapsed <= pullMs) {
+          const t = clamp(elapsed / pullMs, 0, 1);
+          const fastEase = 1 - Math.pow(1 - t, 3);
+          setPullProgress(fastEase);
+          autoRaf = requestAnimationFrame(frame);
+          return;
+        }
+
+        setPullProgress(1);
+
+        if (elapsed < totalBeforeRelease) {
+          autoRaf = requestAnimationFrame(frame);
+          return;
+        }
+
+        autoRaf = 0;
+        springRelease(1);
+      }
+
+      autoRaf = requestAnimationFrame(frame);
+    }
+
+    function checkDesktopTrigger() {
+      if (coarsePointer.matches) return;
+
+      const progress = getScrollProgress();
+
+      if (progress >= DESKTOP_TRIGGER_PROGRESS) {
+        if (desktopArmed) {
+          autoPullHoldRelease();
+          desktopArmed = false;
+        }
+      } else if (progress <= DESKTOP_REARM_PROGRESS) {
+        desktopArmed = true;
       }
     }
+
+    // Extra desktop safety: a downward wheel/trackpad gesture near the page end
+    // triggers the effect even if the browser reports an unusual scroll range.
+    window.addEventListener(
+      "wheel",
+      (event) => {
+        if (coarsePointer.matches || event.deltaY <= 0) return;
+        if (getScrollProgress() >= 0.84 && desktopArmed) {
+          autoPullHoldRelease();
+          desktopArmed = false;
+        }
+      },
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "touchstart",
+      (event) => {
+        if (!coarsePointer.matches || reduceMotion.matches) return;
+        if (event.touches.length !== 1) return;
+
+        touchCandidate = getScrollProgress() >= TOUCH_ARM_PROGRESS;
+        touchActive = false;
+
+        if (touchCandidate) {
+          touchStartY = event.touches[0].clientY;
+        }
+      },
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "touchmove",
+      (event) => {
+        if (!touchCandidate || event.touches.length !== 1) return;
+
+        const y = event.touches[0].clientY;
+        const upwardPull = touchStartY - y;
+
+        // Let tiny finger motion remain normal scrolling. Once the user clearly
+        // pulls upward at the page end, the gesture becomes the typography pull.
+        if (!touchActive && upwardPull > 7) {
+          touchActive = true;
+          ensureOverlay();
+        }
+
+        if (!touchActive) return;
+
+        event.preventDefault();
+
+        const pull = clamp(upwardPull / TOUCH_PULL_DISTANCE, 0, 1);
+        setPullProgress(pull);
+        // Holding the finger in place simply leaves this exact transform frozen.
+      },
+      { passive: false }
+    );
+
+    function finishTouchPull() {
+      if (!touchCandidate) return;
+
+      const wasActive = touchActive;
+      touchCandidate = false;
+      touchActive = false;
+
+      if (wasActive && overlayEl) {
+        springRelease(currentPull);
+      }
+    }
+
+    window.addEventListener("touchend", finishTouchPull, { passive: true });
+    window.addEventListener("touchcancel", finishTouchPull, { passive: true });
 
     reduceMotion.addEventListener?.("change", () => {
       if (reduceMotion.matches) cleanupGlyphPull();
     });
 
-    window.addEventListener("scroll", checkGlyphPullTrigger, { passive: true });
-    window.addEventListener("resize", () => {
-      if (glyphPullRunning) cleanupGlyphPull();
-    }, { passive: true });
-    window.addEventListener("load", checkGlyphPullTrigger);
+    window.addEventListener("scroll", checkDesktopTrigger, { passive: true });
+    window.addEventListener("load", checkDesktopTrigger);
+
+    window.addEventListener(
+      "resize",
+      () => {
+        if (glyphPullRunning) cleanupGlyphPull();
+      },
+      { passive: true }
+    );
   }
 </script>
 <!---->
