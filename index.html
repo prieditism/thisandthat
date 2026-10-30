@@ -456,128 +456,107 @@
     transform-origin: left center;
   }
 
-  .hero.typo-physics-active .typing-line,
-  .hero.typo-release .typing-line {
-    will-change: transform, opacity;
-  }
-
-  .hero.typo-release .typing-line {
-    animation-name: typoRelease;
-    animation-duration: 780ms;
+  .hero.elastic-release .typing-line {
+    will-change: transform;
+    animation-name: elasticStringRelease;
+    animation-duration: 820ms;
     animation-fill-mode: both;
-    animation-timing-function: cubic-bezier(.18,.78,.2,1);
-    animation-delay: var(--release-delay, 0ms);
+    animation-timing-function: cubic-bezier(.22,.72,.18,1);
+    animation-delay: var(--elastic-delay, 0ms);
   }
 
-  @keyframes typoRelease {
+  @keyframes elasticStringRelease {
     0% {
       transform:
-        translate3d(var(--start-x, 0px), var(--start-y, 0px), 0)
-        scaleX(var(--start-scale, 1))
-        skewX(var(--start-skew, 0deg));
-      opacity: 1;
+        scaleX(var(--elastic-start-scale, 1))
+        skewX(var(--elastic-start-skew, 0deg));
     }
 
-    18% {
+    16% {
       transform:
-        translate3d(var(--burst-x, 0px), var(--burst-y, 0px), 0)
-        scaleX(var(--burst-scale, 1))
-        skewX(var(--burst-skew, 0deg));
-      opacity: .97;
+        scaleX(var(--elastic-burst-scale, 1.16))
+        skewX(var(--elastic-burst-skew, -2deg));
     }
 
     31% {
       transform:
-        translate3d(var(--rebound-x, 0px), var(--rebound-y, 0px), 0)
-        scaleX(var(--rebound-scale, 1))
-        skewX(var(--rebound-skew, 0deg));
-      opacity: 1;
+        scaleX(var(--elastic-recoil-scale, .94))
+        skewX(var(--elastic-recoil-skew, 1.5deg));
     }
 
-    44% {
+    45% {
       transform:
-        translate3d(var(--second-x, 0px), var(--second-y, 0px), 0)
-        scaleX(var(--second-scale, 1))
-        skewX(var(--second-skew, 0deg));
+        scaleX(var(--elastic-second-scale, 1.07))
+        skewX(var(--elastic-second-skew, -.9deg));
     }
 
-    58% {
+    60% {
       transform:
-        translate3d(var(--settle-x, 0px), var(--settle-y, 0px), 0)
-        scaleX(var(--settle-scale, 1))
-        skewX(var(--settle-skew, 0deg));
+        scaleX(var(--elastic-third-scale, .985))
+        skewX(var(--elastic-third-skew, .35deg));
     }
 
-    72% {
+    74% {
       transform:
-        translate3d(var(--micro-x, 0px), var(--micro-y, 0px), 0)
-        scaleX(var(--micro-scale, 1))
-        skewX(var(--micro-skew, 0deg));
+        scaleX(var(--elastic-fourth-scale, 1.018))
+        skewX(var(--elastic-fourth-skew, -.18deg));
     }
 
     100% {
-      transform: translate3d(0,0,0) scaleX(1) skewX(0deg);
-      opacity: 1;
+      transform: scaleX(1) skewX(0deg);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero.typo-release .typing-line {
+    .hero.elastic-release .typing-line {
       animation: none !important;
     }
   }
 </style>
 
 <script>
-  const ENABLE_TYPO_PHYSICS = true;
+  const ENABLE_ELASTIC_SCROLL = true;
 
-  const TYPO_TENSION_START = 0.94;
-  const TYPO_RELEASE_AT = 0.985;
-  const TYPO_REARM_BELOW = 0.925;
-  const TYPO_RELEASE_MS = 900;
+  const ELASTIC_TENSION_START = 0.935;
+  const ELASTIC_RELEASE_AT = 0.985;
+  const ELASTIC_REARM_BELOW = 0.915;
+  const ELASTIC_RELEASE_MS = 900;
 
-  if (ENABLE_TYPO_PHYSICS) {
+  if (ENABLE_ELASTIC_SCROLL) {
     const heroEl = document.querySelector(".hero");
-    const typoLines = Array.from(document.querySelectorAll(".hero .typing-line"));
+    const elasticLines = Array.from(document.querySelectorAll(".hero .typing-line"));
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     /*
-      Each row has a different "mass" and direction.
-      x = maximum pull before release on desktop.
-      stretch = horizontal elastic deformation.
-      skew = torsion while being dragged.
+      All lines stay anchored to the same left edge.
+      Only the text itself stretches/compresses, like a rubber sheet or string.
+      Stronger values on the central identity lines create depth without
+      sending rows in different directions.
     */
-    const linePhysics = [
-      { dir: -1, x: 24, y: -3, stretch: 0.075, skew: 2.4, delay: 0  },
-      { dir:  1, x: 36, y: -5, stretch: 0.095, skew: 3.8, delay: 10 },
-      { dir: -1, x: 50, y: -7, stretch: 0.115, skew: 5.0, delay: 18 },
-      { dir:  1, x: 64, y: -9, stretch: 0.135, skew: 6.2, delay: 7  },
-      { dir: -1, x: 78, y: -10, stretch: 0.155, skew: 7.4, delay: 22 },
-      { dir:  1, x: 92, y: -12, stretch: 0.175, skew: 8.4, delay: 13 },
-      { dir: -1, x: 38, y: -5, stretch: 0.080, skew: 3.0, delay: 27 },
-      { dir:  1, x: 28, y: -3, stretch: 0.060, skew: 2.2, delay: 16 }
-    ];
+    const elasticStrength = [0.070, 0.085, 0.100, 0.115, 0.130, 0.145, 0.080, 0.055];
+    const elasticSkew =     [0.7,   0.9,   1.1,   1.3,   1.5,   1.7,   0.8,   0.6];
+    const elasticDelay =    [0,     8,     14,    5,     18,    10,    22,    16];
 
-    let lastScrollY = window.scrollY || 0;
-    let lastScrollTime = performance.now();
+    let lastY = window.scrollY || 0;
+    let lastTime = performance.now();
     let filteredVelocity = 0;
 
     let rafPending = false;
-    let releaseArmed = true;
+    let armed = true;
     let releasing = false;
-    let currentTension = 0;
+    let tension = 0;
 
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
+    function elasticClamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
     }
 
-    function smoothstep01(value) {
-      const x = clamp(value, 0, 1);
+    function elasticSmoothstep(v) {
+      const x = elasticClamp(v, 0, 1);
       return x * x * (3 - 2 * x);
     }
 
-    function getScrollProgress() {
-      const scrollTop = window.pageYOffset || window.scrollY || 0;
+    function getElasticScrollProgress() {
+      const y = window.pageYOffset || window.scrollY || 0;
       const doc = document.documentElement;
       const body = document.body;
 
@@ -588,142 +567,103 @@
       );
 
       const maxScroll = Math.max(1, scrollHeight - window.innerHeight);
-      return clamp(scrollTop / maxScroll, 0, 1);
+      return elasticClamp(y / maxScroll, 0, 1);
     }
 
-    function getViewportFactor() {
+    function mobileFactor() {
       /*
-        Mobile still gets a strong effect, only reduced enough to avoid
-        throwing long lines completely outside a narrow iPhone viewport.
+        iPhone/mobile keeps the same elastic character, only slightly reduced
+        so long lines do not become wider than the viewport.
       */
-      return window.innerWidth <= 980 ? 0.82 : 1;
+      return window.innerWidth <= 980 ? 0.78 : 1;
     }
 
-    function clearDirectTransforms() {
-      typoLines.forEach((line) => {
+    function clearElasticInline() {
+      elasticLines.forEach((line) => {
         line.style.transform = "";
       });
-      heroEl.classList.remove("typo-physics-active");
     }
 
-    function clearReleaseVariables() {
-      typoLines.forEach((line) => {
+    function clearElasticVars() {
+      elasticLines.forEach((line) => {
         [
-          "--start-x", "--start-y", "--start-scale", "--start-skew",
-          "--burst-x", "--burst-y", "--burst-scale", "--burst-skew",
-          "--rebound-x", "--rebound-y", "--rebound-scale", "--rebound-skew",
-          "--second-x", "--second-y", "--second-scale", "--second-skew",
-          "--settle-x", "--settle-y", "--settle-scale", "--settle-skew",
-          "--micro-x", "--micro-y", "--micro-scale", "--micro-skew",
-          "--release-delay"
+          "--elastic-start-scale", "--elastic-start-skew",
+          "--elastic-burst-scale", "--elastic-burst-skew",
+          "--elastic-recoil-scale", "--elastic-recoil-skew",
+          "--elastic-second-scale", "--elastic-second-skew",
+          "--elastic-third-scale", "--elastic-third-skew",
+          "--elastic-fourth-scale", "--elastic-fourth-skew",
+          "--elastic-delay"
         ].forEach((prop) => line.style.removeProperty(prop));
       });
     }
 
-    function applyTension(tension) {
-      currentTension = tension;
+    function applyElasticTension(value) {
+      tension = value;
 
-      if (reduceMotion.matches || releasing || tension <= 0) {
-        if (!releasing && tension <= 0) {
-          clearDirectTransforms();
-        }
+      if (reduceMotion.matches || releasing || value <= 0) {
+        if (!releasing && value <= 0) clearElasticInline();
         return;
       }
 
-      const viewportFactor = getViewportFactor();
-      heroEl.classList.add("typo-physics-active");
+      const factor = mobileFactor();
 
-      typoLines.forEach((line, index) => {
-        const spec = linePhysics[index] || linePhysics[linePhysics.length - 1];
-
-        const x = spec.dir * spec.x * tension * viewportFactor;
-        const y = spec.y * tension * viewportFactor;
+      elasticLines.forEach((line, index) => {
+        const strength = (elasticStrength[index] ?? elasticStrength[elasticStrength.length - 1]) * factor;
+        const skewStrength = (elasticSkew[index] ?? elasticSkew[elasticSkew.length - 1]) * factor;
 
         /*
-          scaleX makes the glyphs feel elastically pulled without changing
-          line wrapping, which is much safer on iPhone than large live
-          letter-spacing changes.
+          The line does not travel. It stays pinned on the left and stretches
+          in X, creating the feeling of pulling a membrane/string.
         */
-        const scale = 1 + spec.stretch * tension;
-        const skew = spec.dir * spec.skew * tension;
+        const scale = 1 + strength * value;
+        const skew = -skewStrength * value;
 
         line.style.transform =
-          `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) ` +
           `scaleX(${scale.toFixed(4)}) skewX(${skew.toFixed(2)}deg)`;
       });
     }
 
-    function setReleaseVariables(line, spec, tension, boost, viewportFactor) {
-      const dir = spec.dir;
-      const baseX = spec.x * viewportFactor;
-      const baseY = spec.y * viewportFactor;
+    function setElasticReleaseVars(line, index, startTension, boost, factor) {
+      const strength = (elasticStrength[index] ?? elasticStrength[elasticStrength.length - 1]) * factor;
+      const skewStrength = (elasticSkew[index] ?? elasticSkew[elasticSkew.length - 1]) * factor;
 
-      const startX = dir * baseX * tension;
-      const startY = baseY * tension;
-      const startScale = 1 + spec.stretch * tension;
-      const startSkew = dir * spec.skew * tension;
+      const startScale = 1 + strength * startTension;
+      const startSkew = -skewStrength * startTension;
 
       /*
-        Guaranteed release: even a slow scroll gets boost >= 1.
-        Faster swipes only add extra inertia on top.
+        Guaranteed pluck for slow scrolling + modest velocity boost for flicks.
+        The recoil crosses through compression, then rings down like a string.
       */
-      const burstX = dir * baseX * 1.65 * boost;
-      const burstY = baseY * 1.28 * boost;
-      const burstScale = 1 + spec.stretch * 1.72 * boost;
-      const burstSkew = dir * spec.skew * 1.55 * boost;
+      const burstScale = 1 + strength * 1.95 * boost;
+      const burstSkew = -skewStrength * 1.45 * boost;
 
-      const reboundX = -dir * baseX * 0.58 * boost;
-      const reboundY = -baseY * 0.34;
-      const reboundScale = 1 - spec.stretch * 0.42;
-      const reboundSkew = -dir * spec.skew * 0.52;
+      const recoilScale = 1 - strength * 0.72;
+      const recoilSkew = skewStrength * 0.85;
 
-      const secondX = dir * baseX * 0.33 * boost;
-      const secondY = baseY * 0.20;
-      const secondScale = 1 + spec.stretch * 0.34;
-      const secondSkew = dir * spec.skew * 0.30;
+      const secondScale = 1 + strength * 0.72;
+      const secondSkew = -skewStrength * 0.48;
 
-      const settleX = -dir * baseX * 0.15;
-      const settleY = -baseY * 0.10;
-      const settleScale = 1 - spec.stretch * 0.10;
-      const settleSkew = -dir * spec.skew * 0.13;
+      const thirdScale = 1 - strength * 0.19;
+      const thirdSkew = skewStrength * 0.18;
 
-      const microX = dir * baseX * 0.055;
-      const microY = baseY * 0.04;
-      const microScale = 1 + spec.stretch * 0.04;
-      const microSkew = dir * spec.skew * 0.05;
+      const fourthScale = 1 + strength * 0.16;
+      const fourthSkew = -skewStrength * 0.08;
 
       const vars = {
-        "--start-x": `${startX.toFixed(2)}px`,
-        "--start-y": `${startY.toFixed(2)}px`,
-        "--start-scale": startScale.toFixed(4),
-        "--start-skew": `${startSkew.toFixed(2)}deg`,
-
-        "--burst-x": `${burstX.toFixed(2)}px`,
-        "--burst-y": `${burstY.toFixed(2)}px`,
-        "--burst-scale": burstScale.toFixed(4),
-        "--burst-skew": `${burstSkew.toFixed(2)}deg`,
-
-        "--rebound-x": `${reboundX.toFixed(2)}px`,
-        "--rebound-y": `${reboundY.toFixed(2)}px`,
-        "--rebound-scale": reboundScale.toFixed(4),
-        "--rebound-skew": `${reboundSkew.toFixed(2)}deg`,
-
-        "--second-x": `${secondX.toFixed(2)}px`,
-        "--second-y": `${secondY.toFixed(2)}px`,
-        "--second-scale": secondScale.toFixed(4),
-        "--second-skew": `${secondSkew.toFixed(2)}deg`,
-
-        "--settle-x": `${settleX.toFixed(2)}px`,
-        "--settle-y": `${settleY.toFixed(2)}px`,
-        "--settle-scale": settleScale.toFixed(4),
-        "--settle-skew": `${settleSkew.toFixed(2)}deg`,
-
-        "--micro-x": `${microX.toFixed(2)}px`,
-        "--micro-y": `${microY.toFixed(2)}px`,
-        "--micro-scale": microScale.toFixed(4),
-        "--micro-skew": `${microSkew.toFixed(2)}deg`,
-
-        "--release-delay": `${spec.delay}ms`
+        "--elastic-start-scale": startScale.toFixed(4),
+        "--elastic-start-skew": `${startSkew.toFixed(2)}deg`,
+        "--elastic-burst-scale": burstScale.toFixed(4),
+        "--elastic-burst-skew": `${burstSkew.toFixed(2)}deg`,
+        "--elastic-recoil-scale": recoilScale.toFixed(4),
+        "--elastic-recoil-skew": `${recoilSkew.toFixed(2)}deg`,
+        "--elastic-second-scale": secondScale.toFixed(4),
+        "--elastic-second-skew": `${secondSkew.toFixed(2)}deg`,
+        "--elastic-third-scale": thirdScale.toFixed(4),
+        "--elastic-third-skew": `${thirdSkew.toFixed(2)}deg`,
+        "--elastic-fourth-scale": fourthScale.toFixed(4),
+        "--elastic-fourth-skew": `${fourthSkew.toFixed(2)}deg`,
+        "--elastic-delay": `${elasticDelay[index] ?? 0}ms`
       };
 
       Object.entries(vars).forEach(([prop, value]) => {
@@ -731,120 +671,110 @@
       });
     }
 
-    function triggerRelease() {
+    function triggerElasticRelease() {
       if (reduceMotion.matches || releasing) return;
 
       releasing = true;
 
-      /*
-        filteredVelocity is px/ms. Slow scrolling still produces boost 1.0.
-        Fast touch flicks can add up to ~55% more travel.
-      */
       const speed = Math.abs(filteredVelocity);
-      const velocityBoost = clamp((speed - 0.12) / 2.2, 0, 1);
-      const boost = 1 + velocityBoost * 0.55;
-      const viewportFactor = getViewportFactor();
+      const velocityExtra = elasticClamp((speed - 0.15) / 2.4, 0, 1);
+      const boost = 1 + velocityExtra * 0.22;
+      const factor = mobileFactor();
 
-      typoLines.forEach((line, index) => {
-        const spec = linePhysics[index] || linePhysics[linePhysics.length - 1];
-        setReleaseVariables(line, spec, Math.max(currentTension, 0.78), boost, viewportFactor);
+      elasticLines.forEach((line, index) => {
+        setElasticReleaseVars(
+          line,
+          index,
+          Math.max(tension, 0.82),
+          boost,
+          factor
+        );
       });
 
-      /*
-        Move from scroll-driven tension into spring release without a blank
-        frame between the two states.
-      */
-      heroEl.classList.remove("typo-release");
+      heroEl.classList.remove("elastic-release");
       void heroEl.offsetWidth;
-      clearDirectTransforms();
-      heroEl.classList.add("typo-release");
+
+      /*
+        Remove the direct pull and immediately let the animation start from the
+        captured stretched state. This keeps the "pluck" continuous.
+      */
+      clearElasticInline();
+      heroEl.classList.add("elastic-release");
 
       window.setTimeout(() => {
-        heroEl.classList.remove("typo-release");
-        clearReleaseVariables();
+        heroEl.classList.remove("elastic-release");
+        clearElasticVars();
+        clearElasticInline();
         releasing = false;
-
-        const progress = getScrollProgress();
-        if (progress < TYPO_RELEASE_AT) {
-          const raw = (progress - TYPO_TENSION_START) /
-            (TYPO_RELEASE_AT - TYPO_TENSION_START);
-          applyTension(smoothstep01(raw));
-        }
-      }, TYPO_RELEASE_MS);
+      }, ELASTIC_RELEASE_MS);
     }
 
-    function updatePhysics() {
+    function updateElasticPhysics() {
       rafPending = false;
 
       if (reduceMotion.matches) {
-        clearDirectTransforms();
-        heroEl.classList.remove("typo-release");
+        heroEl.classList.remove("elastic-release");
+        clearElasticInline();
         return;
       }
 
-      const progress = getScrollProgress();
+      const progress = getElasticScrollProgress();
 
-      if (progress <= TYPO_REARM_BELOW) {
-        releaseArmed = true;
+      if (progress <= ELASTIC_REARM_BELOW) {
+        armed = true;
       }
 
       if (!releasing) {
-        /*
-          Once a release has fired, keep the typography settled at the very
-          bottom. It only becomes "grabbable" again after the user scrolls
-          back above the re-arm point and approaches the tension zone again.
-        */
-        if (!releaseArmed && progress >= TYPO_RELEASE_AT) {
-          applyTension(0);
+        if (!armed && progress >= ELASTIC_RELEASE_AT) {
+          applyElasticTension(0);
         } else {
-          const rawTension =
-            (progress - TYPO_TENSION_START) /
-            (TYPO_RELEASE_AT - TYPO_TENSION_START);
+          const raw =
+            (progress - ELASTIC_TENSION_START) /
+            (ELASTIC_RELEASE_AT - ELASTIC_TENSION_START);
 
-          applyTension(smoothstep01(rawTension));
+          applyElasticTension(elasticSmoothstep(raw));
         }
       }
 
-      if (progress >= TYPO_RELEASE_AT && releaseArmed && !releasing) {
-        triggerRelease();
-        releaseArmed = false;
+      if (progress >= ELASTIC_RELEASE_AT && armed && !releasing) {
+        triggerElasticRelease();
+        armed = false;
       }
     }
 
-    function onScroll() {
+    function onElasticScroll() {
       const now = performance.now();
-      const currentY = window.scrollY || window.pageYOffset || 0;
-      const dt = Math.max(8, now - lastScrollTime);
-      const rawVelocity = (currentY - lastScrollY) / dt;
+      const y = window.scrollY || window.pageYOffset || 0;
+      const dt = Math.max(8, now - lastTime);
+      const rawVelocity = (y - lastY) / dt;
 
-      /*
-        Low-pass filtering removes noisy mobile scroll samples while keeping
-        the sense of finger velocity.
-      */
-      filteredVelocity = filteredVelocity * 0.68 + rawVelocity * 0.32;
+      filteredVelocity = filteredVelocity * 0.72 + rawVelocity * 0.28;
 
-      lastScrollY = currentY;
-      lastScrollTime = now;
+      lastY = y;
+      lastTime = now;
 
       if (!rafPending) {
         rafPending = true;
-        requestAnimationFrame(updatePhysics);
+        requestAnimationFrame(updateElasticPhysics);
       }
     }
 
-    function onResize() {
+    function onElasticResize() {
       if (!rafPending) {
         rafPending = true;
-        requestAnimationFrame(updatePhysics);
+        requestAnimationFrame(updateElasticPhysics);
       }
     }
 
-    reduceMotion.addEventListener?.("change", updatePhysics);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize, { passive: true });
-    window.addEventListener("load", updatePhysics);
+    if (reduceMotion.addEventListener) {
+      reduceMotion.addEventListener("change", updateElasticPhysics);
+    }
 
-    updatePhysics();
+    window.addEventListener("scroll", onElasticScroll, { passive: true });
+    window.addEventListener("resize", onElasticResize, { passive: true });
+    window.addEventListener("load", updateElasticPhysics);
+
+    updateElasticPhysics();
   }
 </script>
 <!---->
