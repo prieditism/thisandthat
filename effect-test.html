@@ -93,7 +93,7 @@
     }
 
     body {
-      height: 185vh;
+      height: 210vh;
       background: #000;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -509,8 +509,9 @@
   if (ENABLE_GLYPH_PULL_TEST) {
     const heroEl = document.querySelector(".hero");
     const sourceLines = Array.from(document.querySelectorAll(".hero .typing-line"));
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const isTouchViewport = () =>
+      (navigator.maxTouchPoints || 0) > 0 && window.innerWidth <= 980;
 
     let overlayEl = null;
     let glyphStates = [];
@@ -627,7 +628,7 @@
       const b = Math.cos(index * 2.47 + total * 0.091);
       const c = Math.sin(index * 0.83 + total * 0.053);
 
-      const mobile = coarsePointer.matches || window.innerWidth <= 980;
+      const mobile = isTouchViewport() || window.innerWidth <= 980;
 
       const radial = mobile ? 54 : 88;
       const scatterX = mobile ? 30 : 54;
@@ -651,7 +652,6 @@
 
     function ensureOverlay() {
       if (overlayEl) return true;
-      if (reduceMotion.matches) return false;
 
       const glyphData = [];
       sourceLines.forEach((line) => {
@@ -755,8 +755,7 @@
       if (
         autoSequenceRunning ||
         touchActive ||
-        reduceMotion.matches ||
-        coarsePointer.matches
+        isTouchViewport()
       ) return;
 
       autoSequenceRunning = true;
@@ -796,7 +795,7 @@
     }
 
     function checkDesktopTrigger() {
-      if (coarsePointer.matches) return;
+      if (isTouchViewport()) return;
 
       const progress = getScrollProgress();
 
@@ -815,7 +814,7 @@
     window.addEventListener(
       "wheel",
       (event) => {
-        if (coarsePointer.matches || event.deltaY <= 0) return;
+        if (isTouchViewport() || event.deltaY <= 0) return;
         if (getScrollProgress() >= 0.84 && desktopArmed) {
           autoPullHoldRelease();
           desktopArmed = false;
@@ -827,7 +826,7 @@
     window.addEventListener(
       "touchstart",
       (event) => {
-        if (!coarsePointer.matches || reduceMotion.matches) return;
+        if (!isTouchViewport()) return;
         if (event.touches.length !== 1) return;
 
         touchStartProgress = getScrollProgress();
@@ -890,12 +889,27 @@
     window.addEventListener("touchend", finishTouchPull, { passive: true });
     window.addEventListener("touchcancel", finishTouchPull, { passive: true });
 
-    reduceMotion.addEventListener?.("change", () => {
-      if (reduceMotion.matches) cleanupGlyphPull();
-    });
-
     window.addEventListener("scroll", checkDesktopTrigger, { passive: true });
     window.addEventListener("load", checkDesktopTrigger);
+
+    // Fallback for browsers/trackpads that report unusual wheel or pointer media.
+    // If the page is clearly in the final zone on a desktop-sized viewport,
+    // trigger once even without a matching wheel event.
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (
+          window.innerWidth > 980 &&
+          getScrollProgress() >= 0.86 &&
+          desktopArmed &&
+          !autoSequenceRunning
+        ) {
+          autoPullHoldRelease();
+          desktopArmed = false;
+        }
+      },
+      { passive: true }
+    );
 
     window.addEventListener(
       "resize",
