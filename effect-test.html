@@ -504,7 +504,7 @@
     const sourceLines = Array.from(document.querySelectorAll(".hero .typing-line"));
     const coarsePointer = window.matchMedia("(pointer: coarse)");
     const isTouchViewport = () =>
-      (navigator.maxTouchPoints || 0) > 0 && window.innerWidth <= 980;
+      coarsePointer.matches && window.innerWidth <= 980;
 
     let overlayEl = null;
     let glyphStates = [];
@@ -611,6 +611,7 @@
 
       // Anchor the oversampled glyph back onto the exact original character box.
       el.style.transformOrigin = "0 0";
+      el.style.transform = `scale(${(1 / renderScale).toFixed(4)})`;
 
       return el;
     }
@@ -742,7 +743,11 @@
         const spring =
           Math.exp(-5.4 * t) * Math.cos(10.4 * t);
 
-        setPullProgress(from * spring);
+        const releaseValue = isTouchViewport()
+          ? from * spring
+          : from * Math.max(-0.08, spring);
+
+        setPullProgress(releaseValue);
 
         if (t < 1) {
           releaseRaf = requestAnimationFrame(frame);
@@ -769,7 +774,7 @@
 
       const start = performance.now();
       const pullMs = 180;
-      const holdMs = 190;
+      const holdMs = 260;
       const totalBeforeRelease = pullMs + holdMs;
 
       function frame(now) {
