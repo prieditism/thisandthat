@@ -503,6 +503,7 @@
     const heroEl = document.querySelector(".hero");
     const sourceLines = Array.from(document.querySelectorAll(".hero .typing-line"));
     const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const hasTouchInput = () => (navigator.maxTouchPoints || 0) > 0;
     const isTouchViewport = () =>
       coarsePointer.matches && window.innerWidth <= 980;
 
@@ -703,7 +704,7 @@
         let scale = g.scale;
         let rotate = g.rotate;
 
-        if (touchActive && isTouchViewport()) {
+        if (touchActive && hasTouchInput()) {
           const liveVector = getPullVector(
             g.glyph,
             g.index,
@@ -833,7 +834,7 @@
 
     function desktopShouldTrigger() {
       if (isTouchViewport()) return false;
-      if (autoSequenceRunning || touchActive) return false;
+      if (autoSequenceRunning || touchActive || touchCandidate) return false;
 
       const progress = getScrollProgress();
       return progress >= 0.78;
@@ -928,7 +929,7 @@
     window.addEventListener(
       "touchstart",
       (event) => {
-        if (!isTouchViewport()) return;
+        if (!hasTouchInput()) return;
         if (event.touches.length !== 1) return;
 
         touchStartProgress = getScrollProgress();
