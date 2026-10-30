@@ -133,7 +133,8 @@
     .line-2,
     .line-3,
     .line-4,
-    .line-5 {
+    .line-5,
+    .line-6 {
       margin-top: -0.17em;
     }
 
@@ -142,13 +143,14 @@
     .line-3 { font-size: calc(var(--base-size) - 4px); }
     .line-4 { font-size: calc(var(--base-size) - 6px); }
     .line-5 { font-size: calc(var(--base-size) - 8px); }
+    .line-6 { font-size: calc(var(--base-size) - 10px); }
 
     .gap-large {
       height: 44px;
       min-height: 44px;
     }
 
-    .line-6 {
+    .line-7 {
       font-size: clamp(28px, 2.8vw, 42px);
       line-height: 1.04;
       letter-spacing: -0.03em;
@@ -161,7 +163,7 @@
       min-height: 0px;
     }
 
-    .line-7 {
+    .line-8 {
       font-size: clamp(17px, 1.35vw, 22px);
       line-height: 1.15;
       letter-spacing: -0.01em;
@@ -170,14 +172,16 @@
     }
 
     .line-5 a,
-    .line-7 a {
+    .line-6 a,
+    .line-8 a {
       pointer-events: auto;
       color: #fff;
       transition: opacity 0.18s ease;
     }
 
     .line-5 a:hover,
-    .line-7 a:hover {
+    .line-6 a:hover,
+    .line-8 a:hover {
       opacity: 0.72;
     }
 
@@ -220,7 +224,8 @@
       .line-2,
       .line-3,
       .line-4,
-      .line-5 {
+      .line-5,
+      .line-6 {
         margin-top: -0.15em;
       }
 
@@ -229,7 +234,7 @@
         min-height: 34px;
       }
 
-      .line-6 {
+      .line-7 {
         font-size: clamp(22px, 4.2vw, 32px);
       }
 
@@ -238,7 +243,7 @@
         min-height: 38px;
       }
 
-      .line-7 {
+      .line-8 {
         font-size: clamp(15px, 2.8vw, 19px);
       }
     }
@@ -259,12 +264,13 @@
       <div class="typing-line line-3"><span id="line3"></span></div>
       <div class="typing-line line-4"><span id="line4"></span></div>
       <div class="typing-line line-5"><span id="line5"></span></div>
+      <div class="typing-line line-6"><span id="line6"></span></div>
 
       <div class="gap-large"></div>
 
-      <div class="typing-line line-6"><span id="line6"></span></div>
-      <div class="social-gap"></div>
       <div class="typing-line line-7"><span id="line7"></span></div>
+      <div class="social-gap"></div>
+      <div class="typing-line line-8"><span id="line8"></span></div>
     </div>
   </section>
 
@@ -278,10 +284,13 @@
     const line5Plain = "Founder @reverie™";
     const line5Html = 'Founder <a href="https://www.reverie.lv" target="_blank" rel="noopener noreferrer">@reverie™</a>';
 
-    const line6Text = "Machine Hermeneutics as Artistic Practice";
+    const line6Plain = "building reverie™ technologies";
+    const line6Html = 'building <a href="https://reverie.systems/" target="_blank" rel="noopener noreferrer">reverie™ technologies</a>';
 
-    const line7Plain = "in | orcid | ig | yt | tiktok | email | call";
-    const line7Html = `
+    const line7Text = "Machine Hermeneutics as Artistic Practice";
+
+    const line8Plain = "in | orcid | ig | yt | tiktok | email | call";
+    const line8Html = `
       <a href="https://www.linkedin.com/in/martins-prieditis" target="_blank" rel="noopener noreferrer">in</a>
       |
       <a href="https://orcid.org/0009-0006-7257-5139" target="_blank" rel="noopener noreferrer">orcid</a>
@@ -304,6 +313,7 @@
     const line5El = document.getElementById("line5");
     const line6El = document.getElementById("line6");
     const line7El = document.getElementById("line7");
+    const line8El = document.getElementById("line8");
 
     const cursor = document.createElement("span");
     cursor.className = "cursor";
@@ -314,8 +324,9 @@
       line3Text,
       line4Text,
       line5Plain,
-      line6Text,
-      line7Plain
+      line6Plain,
+      line7Text,
+      line8Plain
     ];
 
     const totalChars = lines.reduce((sum, line) => sum + line.length, 0);
@@ -377,26 +388,31 @@
       const c5 = clamp(remaining, 0, line5Plain.length);
       remaining -= c5;
 
-      const c6 = clamp(remaining, 0, line6Text.length);
+      const c6 = clamp(remaining, 0, line6Plain.length);
       remaining -= c6;
 
-      const c7 = clamp(remaining, 0, line7Plain.length);
+      const c7 = clamp(remaining, 0, line7Text.length);
+      remaining -= c7;
+
+      const c8 = clamp(remaining, 0, line8Plain.length);
 
       line1El.textContent = line1Text.slice(0, c1);
       line2El.textContent = line2Text.slice(0, c2);
       line3El.textContent = line3Text.slice(0, c3);
       line4El.textContent = line4Text.slice(0, c4);
-      line6El.textContent = line6Text.slice(0, c6);
+      line7El.textContent = line7Text.slice(0, c7);
 
       renderPartialLinkedText(line5El, line5Plain, line5Html, c5);
-      renderPartialLinkedText(line7El, line7Plain, line7Html, c7);
+      renderPartialLinkedText(line6El, line6Plain, line6Html, c6);
+      renderPartialLinkedText(line8El, line8Plain, line8Html, c8);
 
       const b1 = line1Text.length;
       const b2 = b1 + line2Text.length;
       const b3 = b2 + line3Text.length;
       const b4 = b3 + line4Text.length;
       const b5 = b4 + line5Plain.length;
-      const b6 = b5 + line6Text.length;
+      const b6 = b5 + line6Plain.length;
+      const b7 = b6 + line7Text.length;
 
       if (visibleChars < b1) {
         setCursorTarget(line1El);
@@ -410,8 +426,10 @@
         setCursorTarget(line5El);
       } else if (visibleChars < b6) {
         setCursorTarget(line6El);
-      } else {
+      } else if (visibleChars < b7) {
         setCursorTarget(line7El);
+      } else {
+        setCursorTarget(line8El);
       }
 
       mountCursor();
@@ -440,7 +458,8 @@
   .hero.typo-drag-active .line-4,
   .hero.typo-drag-active .line-5,
   .hero.typo-drag-active .line-6,
-  .hero.typo-drag-active .line-7 {
+  .hero.typo-drag-active .line-7,
+  .hero.typo-drag-active .line-8 {
     will-change: transform, letter-spacing, opacity;
   }
 
@@ -472,103 +491,143 @@
     animation: dragLine7 900ms cubic-bezier(.18,.72,.12,1) forwards;
   }
 
+  .hero.typo-drag-active .line-8 {
+    animation: dragLine8 900ms cubic-bezier(.18,.72,.12,1) forwards;
+  }
+
   @keyframes dragLine1 {
-    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-    22%  { transform: translate3d(18px,-3px,0) scaleX(1.035) skewX(-4deg); letter-spacing: -0.065em; }
-    40%  { transform: translate3d(-10px,2px,0) scaleX(0.985) skewX(2deg); letter-spacing: -0.03em; }
-    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
+    22% { transform:translate3d(22px,-4px,0) scaleX(1.04) skewX(-4.5deg); letter-spacing:-0.066em; }
+    40% { transform:translate3d(-12px,3px,0) scaleX(.982) skewX(2.4deg); letter-spacing:-0.03em; }
+    55% { transform:translate3d(8px,-2px,0) scaleX(1.012) skewX(-1.5deg); }
+    62% { transform:translate3d(-6px,2px,0) scaleX(.994) skewX(1.1deg); }
+    69% { transform:translate3d(3px,-1px,0) scaleX(1.004) skewX(-.6deg); }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
   }
-
   @keyframes dragLine2 {
-    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-    24%  { transform: translate3d(34px,-5px,0) scaleX(1.06) skewX(-6deg); letter-spacing: -0.08em; }
-    44%  { transform: translate3d(-16px,3px,0) scaleX(0.975) skewX(2.5deg); letter-spacing: -0.028em; }
-    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
+    24% { transform:translate3d(40px,-6px,0) scaleX(1.07) skewX(-6.5deg); letter-spacing:-0.082em; }
+    44% { transform:translate3d(-18px,4px,0) scaleX(.972) skewX(3deg); letter-spacing:-0.028em; }
+    57% { transform:translate3d(11px,-2px,0) scaleX(1.015) skewX(-1.8deg); }
+    64% { transform:translate3d(-7px,2px,0) scaleX(.992) skewX(1.2deg); }
+    71% { transform:translate3d(4px,-1px,0) scaleX(1.004) skewX(-.7deg); }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
   }
-
   @keyframes dragLine3 {
-    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-    26%  { transform: translate3d(52px,-6px,0) scaleX(1.08) skewX(-7deg); letter-spacing: -0.085em; }
-    46%  { transform: translate3d(-18px,4px,0) scaleX(0.97) skewX(3deg); letter-spacing: -0.03em; }
-    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
+    26% { transform:translate3d(60px,-8px,0) scaleX(1.09) skewX(-7.5deg); letter-spacing:-0.088em; }
+    46% { transform:translate3d(-21px,5px,0) scaleX(.966) skewX(3.4deg); letter-spacing:-0.03em; }
+    59% { transform:translate3d(13px,-3px,0) scaleX(1.018) skewX(-2deg); }
+    66% { transform:translate3d(-8px,2px,0) scaleX(.99) skewX(1.4deg); }
+    73% { transform:translate3d(4px,-1px,0) scaleX(1.005) skewX(-.8deg); }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
   }
-
   @keyframes dragLine4 {
-    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-    28%  { transform: translate3d(68px,-8px,0) scaleX(1.095) skewX(-8deg); letter-spacing: -0.09em; }
-    48%  { transform: translate3d(-20px,4px,0) scaleX(0.965) skewX(3deg); letter-spacing: -0.03em; }
-    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
+    28% { transform:translate3d(78px,-10px,0) scaleX(1.108) skewX(-9deg); letter-spacing:-0.094em; }
+    48% { transform:translate3d(-24px,5px,0) scaleX(.958) skewX(3.7deg); letter-spacing:-0.03em; }
+    61% { transform:translate3d(15px,-3px,0) scaleX(1.02) skewX(-2.2deg); }
+    68% { transform:translate3d(-9px,2px,0) scaleX(.989) skewX(1.5deg); }
+    75% { transform:translate3d(5px,-1px,0) scaleX(1.006) skewX(-.8deg); }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
   }
-
   @keyframes dragLine5 {
-    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-    30%  { transform: translate3d(78px,-10px,0) scaleX(1.11) skewX(-9deg); letter-spacing: -0.095em; }
-    50%  { transform: translate3d(-22px,5px,0) scaleX(0.96) skewX(3deg); letter-spacing: -0.032em; }
-    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
+    30% { transform:translate3d(90px,-12px,0) scaleX(1.125) skewX(-10deg); letter-spacing:-0.10em; }
+    50% { transform:translate3d(-27px,6px,0) scaleX(.952) skewX(4deg); letter-spacing:-0.032em; }
+    63% { transform:translate3d(17px,-4px,0) scaleX(1.022) skewX(-2.4deg); }
+    70% { transform:translate3d(-10px,2px,0) scaleX(.988) skewX(1.6deg); }
+    77% { transform:translate3d(5px,-1px,0) scaleX(1.006) skewX(-.9deg); }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
   }
-
   @keyframes dragLine6 {
-    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
-    26%  { transform: translate3d(26px,-4px,0) scaleX(1.035) skewX(-3deg); opacity: 0.96; }
-    46%  { transform: translate3d(-10px,2px,0) scaleX(0.985) skewX(1.4deg); opacity: 1; }
-    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
+    32% { transform:translate3d(102px,-13px,0) scaleX(1.14) skewX(-11deg); letter-spacing:-0.105em; }
+    52% { transform:translate3d(-30px,6px,0) scaleX(.947) skewX(4.3deg); letter-spacing:-0.031em; }
+    65% { transform:translate3d(19px,-4px,0) scaleX(1.024) skewX(-2.6deg); }
+    72% { transform:translate3d(-11px,3px,0) scaleX(.987) skewX(1.7deg); }
+    79% { transform:translate3d(6px,-1px,0) scaleX(1.007) skewX(-1deg); }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing:-0.045em; }
   }
-
   @keyframes dragLine7 {
-    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
-    28%  { transform: translate3d(18px,-2px,0) scaleX(1.02) skewX(-2deg); opacity: 0.94; }
-    48%  { transform: translate3d(-7px,1px,0) scaleX(0.99) skewX(1deg); opacity: 1; }
-    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
+    27% { transform:translate3d(31px,-5px,0) scaleX(1.042) skewX(-3.5deg); opacity:.95; }
+    47% { transform:translate3d(-12px,3px,0) scaleX(.982) skewX(1.6deg); opacity:1; }
+    60% { transform:translate3d(7px,-2px,0) scaleX(1.009) skewX(-1deg); opacity:.98; }
+    67% { transform:translate3d(-4px,1px,0) scaleX(.996) skewX(.6deg); opacity:1; }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
+  }
+  @keyframes dragLine8 {
+    0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
+    29% { transform:translate3d(22px,-3px,0) scaleX(1.025) skewX(-2.3deg); opacity:.93; }
+    49% { transform:translate3d(-9px,2px,0) scaleX(.988) skewX(1.1deg); opacity:1; }
+    62% { transform:translate3d(5px,-1px,0) scaleX(1.006) skewX(-.7deg); opacity:.98; }
+    69% { transform:translate3d(-3px,1px,0) scaleX(.997) skewX(.4deg); opacity:1; }
+    100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
   }
 
   @media (max-width: 980px) {
     @keyframes dragLine1 {
-      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      22%  { transform: translate3d(10px,-2px,0) scaleX(1.02) skewX(-2.5deg); letter-spacing: -0.055em; }
-      40%  { transform: translate3d(-6px,1px,0) scaleX(0.99) skewX(1deg); letter-spacing: -0.036em; }
-      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
+      24% { transform:translate3d(12px,-2px,0) scaleX(1.022) skewX(-2.6deg); }
+      43% { transform:translate3d(-7px,1px,0) scaleX(.989) skewX(1.1deg); }
+      58% { transform:translate3d(4px,-1px,0) skewX(-.6deg); }
+      67% { transform:translate3d(-2px,1px,0) skewX(.35deg); }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
     }
-
     @keyframes dragLine2 {
-      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      24%  { transform: translate3d(16px,-3px,0) scaleX(1.03) skewX(-3deg); letter-spacing: -0.06em; }
-      44%  { transform: translate3d(-8px,2px,0) scaleX(0.985) skewX(1.2deg); letter-spacing: -0.035em; }
-      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
+      26% { transform:translate3d(19px,-3px,0) scaleX(1.032) skewX(-3.2deg); }
+      45% { transform:translate3d(-9px,2px,0) scaleX(.984) skewX(1.3deg); }
+      60% { transform:translate3d(5px,-1px,0) skewX(-.7deg); }
+      69% { transform:translate3d(-3px,1px,0) skewX(.4deg); }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
     }
-
     @keyframes dragLine3 {
-      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      26%  { transform: translate3d(24px,-3px,0) scaleX(1.04) skewX(-3.5deg); letter-spacing: -0.062em; }
-      46%  { transform: translate3d(-10px,2px,0) scaleX(0.982) skewX(1.4deg); letter-spacing: -0.036em; }
-      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
+      28% { transform:translate3d(27px,-4px,0) scaleX(1.043) skewX(-3.8deg); }
+      47% { transform:translate3d(-11px,2px,0) scaleX(.98) skewX(1.5deg); }
+      62% { transform:translate3d(6px,-1px,0) skewX(-.8deg); }
+      71% { transform:translate3d(-3px,1px,0) skewX(.45deg); }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
     }
-
     @keyframes dragLine4 {
-      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      28%  { transform: translate3d(30px,-4px,0) scaleX(1.05) skewX(-4deg); letter-spacing: -0.065em; }
-      48%  { transform: translate3d(-12px,2px,0) scaleX(0.98) skewX(1.6deg); letter-spacing: -0.036em; }
-      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
+      30% { transform:translate3d(34px,-5px,0) scaleX(1.052) skewX(-4.4deg); }
+      49% { transform:translate3d(-13px,3px,0) scaleX(.977) skewX(1.7deg); }
+      64% { transform:translate3d(7px,-2px,0) skewX(-.9deg); }
+      73% { transform:translate3d(-4px,1px,0) skewX(.5deg); }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
     }
-
     @keyframes dragLine5 {
-      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
-      30%  { transform: translate3d(34px,-4px,0) scaleX(1.055) skewX(-4.5deg); letter-spacing: -0.07em; }
-      50%  { transform: translate3d(-13px,3px,0) scaleX(0.978) skewX(1.8deg); letter-spacing: -0.037em; }
-      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
+      32% { transform:translate3d(40px,-5px,0) scaleX(1.06) skewX(-5deg); }
+      51% { transform:translate3d(-15px,3px,0) scaleX(.974) skewX(1.9deg); }
+      66% { transform:translate3d(8px,-2px,0) skewX(-1deg); }
+      75% { transform:translate3d(-4px,1px,0) skewX(.55deg); }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
     }
-
     @keyframes dragLine6 {
-      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
-      26%  { transform: translate3d(12px,-2px,0) scaleX(1.018) skewX(-1.5deg); opacity: 0.96; }
-      46%  { transform: translate3d(-5px,1px,0) scaleX(0.992) skewX(0.8deg); opacity: 1; }
-      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
+      34% { transform:translate3d(45px,-6px,0) scaleX(1.066) skewX(-5.4deg); }
+      53% { transform:translate3d(-16px,3px,0) scaleX(.972) skewX(2deg); }
+      68% { transform:translate3d(9px,-2px,0) skewX(-1.1deg); }
+      77% { transform:translate3d(-5px,1px,0) skewX(.6deg); }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); }
     }
-
     @keyframes dragLine7 {
-      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
-      28%  { transform: translate3d(8px,-1px,0) scaleX(1.012) skewX(-1deg); opacity: 0.95; }
-      48%  { transform: translate3d(-3px,1px,0) scaleX(0.995) skewX(0.6deg); opacity: 1; }
-      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
+      28% { transform:translate3d(14px,-2px,0) scaleX(1.02) skewX(-1.7deg); opacity:.96; }
+      47% { transform:translate3d(-6px,1px,0) scaleX(.991) skewX(.8deg); opacity:1; }
+      62% { transform:translate3d(3px,-1px,0) skewX(-.4deg); opacity:.98; }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
+    }
+    @keyframes dragLine8 {
+      0% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
+      30% { transform:translate3d(10px,-1px,0) scaleX(1.014) skewX(-1.2deg); opacity:.95; }
+      49% { transform:translate3d(-4px,1px,0) scaleX(.994) skewX(.6deg); opacity:1; }
+      64% { transform:translate3d(2px,0,0) skewX(-.3deg); opacity:.98; }
+      100% { transform:translate3d(0,0,0) scaleX(1) skewX(0deg); opacity:1; }
     }
   }
 </style>
