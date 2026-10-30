@@ -213,7 +213,7 @@
 
     @media (max-width: 980px) {
     body {
-      height: 210vh;
+      height: 250vh;
     }
 
       :root {
@@ -518,6 +518,7 @@
     let touchActive = false;
     let touchStartY = 0;
     let touchStartProgress = 0;
+    let mobileScrollArmed = true;
     let currentPull = 0;
 
     function clamp(value, min, max) {
@@ -635,15 +636,15 @@
 
       const mobile = isTouchViewport() || window.innerWidth <= 980;
 
-      const radial = mobile ? 54 : 88;
-      const scatterX = mobile ? 30 : 54;
-      const scatterY = mobile ? 20 : 36;
+      const radial = mobile ? 78 : 118;
+      const scatterX = mobile ? 48 : 76;
+      const scatterY = mobile ? 32 : 50;
 
-      const dx = vx * radial + a * scatterX + c * scatterX * 0.25;
-      const dy = vy * radial * 0.62 + b * scatterY;
+      const dx = vx * radial + a * scatterX + c * scatterX * 0.28;
+      const dy = vy * radial * 0.68 + b * scatterY;
 
-      const baseScale = mobile ? 1.48 : 2.10;
-      const scaleVariation = mobile ? 0.32 : 0.70;
+      const baseScale = mobile ? 1.88 : 2.10;
+      const scaleVariation = mobile ? 0.58 : 0.70;
       const scale = baseScale + ((a + 1) * 0.5) * scaleVariation;
 
       const rotate = a * (mobile ? 5.5 : 8.0);
@@ -759,11 +760,11 @@
       releaseRaf = requestAnimationFrame(frame);
     }
 
-    function autoPullHoldRelease() {
+    function autoPullHoldRelease(allowTouchAuto = false) {
       if (
         autoSequenceRunning ||
         touchActive ||
-        isTouchViewport()
+        (isTouchViewport() && !allowTouchAuto)
       ) return;
 
       autoSequenceRunning = true;
@@ -773,8 +774,9 @@
       }
 
       const start = performance.now();
-      const pullMs = 180;
-      const holdMs = 260;
+      const mobileAuto = isTouchViewport() && allowTouchAuto;
+      const pullMs = mobileAuto ? 165 : 180;
+      const holdMs = mobileAuto ? 210 : 260;
       const totalBeforeRelease = pullMs + holdMs;
 
       function frame(now) {
@@ -862,6 +864,38 @@
       lastDesktopY = window.scrollY || 0;
     });
 
+    function handleMobileScrollTrigger() {
+      if (!isTouchViewport()) return;
+
+      const progress = getScrollProgress();
+
+      if (
+        progress >= 0.74 &&
+        mobileScrollArmed &&
+        !touchActive &&
+        !glyphPullRunning &&
+        !autoSequenceRunning
+      ) {
+        mobileScrollArmed = false;
+
+        // This is the missing first-swipe path:
+        // scrolling itself launches the effect; no second finger pull required.
+        touchCandidate = false;
+        autoPullHoldRelease(true);
+        return;
+      }
+
+      if (
+        progress <= 0.62 &&
+        !glyphPullRunning &&
+        !autoSequenceRunning
+      ) {
+        mobileScrollArmed = true;
+      }
+    }
+
+    window.addEventListener("scroll", handleMobileScrollTrigger, { passive: true });
+
     window.addEventListener(
       "touchstart",
       (event) => {
@@ -896,6 +930,7 @@
           (liveProgress >= TOUCH_ARM_PROGRESS || touchStartProgress >= TOUCH_ARM_PROGRESS)
         ) {
           touchActive = true;
+          mobileScrollArmed = false;
           // Rebase the gesture at the activation point so the pull begins
           // immediately and naturally instead of jumping to a large value.
           touchStartY = y + 5;
