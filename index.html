@@ -452,111 +452,164 @@
   </script>
 <!---->
 <style>
-  .hero .typing-line {
-    transform-origin: left center;
+  .hero.typo-drag-active .line-1,
+  .hero.typo-drag-active .line-2,
+  .hero.typo-drag-active .line-3,
+  .hero.typo-drag-active .line-4,
+  .hero.typo-drag-active .line-5,
+  .hero.typo-drag-active .line-6,
+  .hero.typo-drag-active .line-7,
+  .hero.typo-drag-active .line-8 {
+    will-change: transform, letter-spacing, opacity;
   }
 
-  .hero.elastic-release .typing-line {
-    will-change: transform;
-    animation-name: elasticStringRelease;
-    animation-duration: 820ms;
-    animation-fill-mode: both;
-    animation-timing-function: cubic-bezier(.22,.72,.18,1);
-    animation-delay: var(--elastic-delay, 0ms);
+  .hero.typo-drag-active .line-1 {
+    animation: dragLine1 900ms cubic-bezier(.18,.72,.12,1) forwards;
   }
 
-  @keyframes elasticStringRelease {
-    0% {
-      transform:
-        scaleX(var(--elastic-start-scale, 1))
-        skewX(var(--elastic-start-skew, 0deg));
-    }
-
-    16% {
-      transform:
-        scaleX(var(--elastic-burst-scale, 1.16))
-        skewX(var(--elastic-burst-skew, -2deg));
-    }
-
-    31% {
-      transform:
-        scaleX(var(--elastic-recoil-scale, .94))
-        skewX(var(--elastic-recoil-skew, 1.5deg));
-    }
-
-    45% {
-      transform:
-        scaleX(var(--elastic-second-scale, 1.07))
-        skewX(var(--elastic-second-skew, -.9deg));
-    }
-
-    60% {
-      transform:
-        scaleX(var(--elastic-third-scale, .985))
-        skewX(var(--elastic-third-skew, .35deg));
-    }
-
-    74% {
-      transform:
-        scaleX(var(--elastic-fourth-scale, 1.018))
-        skewX(var(--elastic-fourth-skew, -.18deg));
-    }
-
-    100% {
-      transform: scaleX(1) skewX(0deg);
-    }
+  .hero.typo-drag-active .line-2 {
+    animation: dragLine2 900ms cubic-bezier(.18,.72,.12,1) forwards;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .hero.elastic-release .typing-line {
-      animation: none !important;
+  .hero.typo-drag-active .line-3 {
+    animation: dragLine3 900ms cubic-bezier(.18,.72,.12,1) forwards;
+  }
+
+  .hero.typo-drag-active .line-4 {
+    animation: dragLine4 900ms cubic-bezier(.18,.72,.12,1) forwards;
+  }
+
+  .hero.typo-drag-active .line-5 {
+    animation: dragLine5 900ms cubic-bezier(.18,.72,.12,1) forwards;
+  }
+
+  .hero.typo-drag-active .line-6 {
+    animation: dragLine6 900ms cubic-bezier(.18,.72,.12,1) forwards;
+  }
+
+  .hero.typo-drag-active .line-7 {
+    animation: dragLine7 900ms cubic-bezier(.18,.72,.12,1) forwards;
+  }
+
+  .hero.typo-drag-active .line-8 {
+    animation: dragLine8 900ms cubic-bezier(.18,.72,.12,1) forwards;
+  }
+
+  @keyframes dragLine1 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    22%  { transform: translate3d(18px,-3px,0) scaleX(1.075) skewX(-5deg); letter-spacing: -0.095em; }
+    40%  { transform: translate3d(-10px,2px,0) scaleX(0.965) skewX(2.8deg); letter-spacing: 0.005em; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+  }
+  @keyframes dragLine2 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    24%  { transform: translate3d(34px,-5px,0) scaleX(1.10) skewX(-7deg); letter-spacing: -0.115em; }
+    44%  { transform: translate3d(-16px,3px,0) scaleX(0.955) skewX(3.5deg); letter-spacing: 0.012em; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+  }
+  @keyframes dragLine3 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    26%  { transform: translate3d(52px,-6px,0) scaleX(1.13) skewX(-8deg); letter-spacing: -0.13em; }
+    46%  { transform: translate3d(-18px,4px,0) scaleX(0.945) skewX(4deg); letter-spacing: 0.018em; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+  }
+  @keyframes dragLine4 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    28%  { transform: translate3d(68px,-8px,0) scaleX(1.16) skewX(-9deg); letter-spacing: -0.145em; }
+    48%  { transform: translate3d(-20px,4px,0) scaleX(0.935) skewX(4.5deg); letter-spacing: 0.022em; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+  }
+  @keyframes dragLine5 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    30%  { transform: translate3d(78px,-10px,0) scaleX(1.19) skewX(-10deg); letter-spacing: -0.16em; }
+    50%  { transform: translate3d(-22px,5px,0) scaleX(0.925) skewX(5deg); letter-spacing: 0.028em; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+  }
+  @keyframes dragLine6 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    30%  { transform: translate3d(86px,-11px,0) scaleX(1.21) skewX(-11deg); letter-spacing: -0.17em; }
+    50%  { transform: translate3d(-24px,5px,0) scaleX(0.92) skewX(5.4deg); letter-spacing: 0.03em; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+  }
+  @keyframes dragLine7 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+    26%  { transform: translate3d(26px,-4px,0) scaleX(1.06) skewX(-4deg); opacity: 0.95; }
+    46%  { transform: translate3d(-10px,2px,0) scaleX(0.975) skewX(2deg); opacity: 1; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+  }
+  @keyframes dragLine8 {
+    0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+    28%  { transform: translate3d(18px,-2px,0) scaleX(1.035) skewX(-2.5deg); opacity: 0.94; }
+    48%  { transform: translate3d(-7px,1px,0) scaleX(0.985) skewX(1.3deg); opacity: 1; }
+    100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+  }
+
+  @media (max-width: 980px) {
+    @keyframes dragLine1 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      22%  { transform: translate3d(10px,-2px,0) scaleX(1.04) skewX(-3deg); letter-spacing: -0.07em; }
+      40%  { transform: translate3d(-6px,1px,0) scaleX(0.98) skewX(1.4deg); letter-spacing: -0.025em; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    }
+    @keyframes dragLine2 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      24%  { transform: translate3d(16px,-3px,0) scaleX(1.055) skewX(-3.6deg); letter-spacing: -0.078em; }
+      44%  { transform: translate3d(-8px,2px,0) scaleX(0.975) skewX(1.6deg); letter-spacing: -0.022em; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    }
+    @keyframes dragLine3 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      26%  { transform: translate3d(24px,-3px,0) scaleX(1.07) skewX(-4deg); letter-spacing: -0.085em; }
+      46%  { transform: translate3d(-10px,2px,0) scaleX(0.97) skewX(1.8deg); letter-spacing: -0.018em; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    }
+    @keyframes dragLine4 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      28%  { transform: translate3d(30px,-4px,0) scaleX(1.085) skewX(-4.6deg); letter-spacing: -0.092em; }
+      48%  { transform: translate3d(-12px,2px,0) scaleX(0.965) skewX(2deg); letter-spacing: -0.015em; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    }
+    @keyframes dragLine5 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      30%  { transform: translate3d(34px,-4px,0) scaleX(1.095) skewX(-5.2deg); letter-spacing: -0.10em; }
+      50%  { transform: translate3d(-13px,3px,0) scaleX(0.96) skewX(2.2deg); letter-spacing: -0.012em; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    }
+    @keyframes dragLine6 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+      30%  { transform: translate3d(38px,-5px,0) scaleX(1.105) skewX(-5.8deg); letter-spacing: -0.108em; }
+      50%  { transform: translate3d(-14px,3px,0) scaleX(0.955) skewX(2.4deg); letter-spacing: -0.010em; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); letter-spacing: -0.045em; }
+    }
+    @keyframes dragLine7 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+      26%  { transform: translate3d(12px,-2px,0) scaleX(1.025) skewX(-1.8deg); opacity: 0.96; }
+      46%  { transform: translate3d(-5px,1px,0) scaleX(0.99) skewX(0.9deg); opacity: 1; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+    }
+    @keyframes dragLine8 {
+      0%   { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
+      28%  { transform: translate3d(8px,-1px,0) scaleX(1.018) skewX(-1.2deg); opacity: 0.95; }
+      48%  { transform: translate3d(-3px,1px,0) scaleX(0.992) skewX(0.7deg); opacity: 1; }
+      100% { transform: translate3d(0,0,0) scaleX(1) skewX(0deg); opacity: 1; }
     }
   }
 </style>
 
 <script>
-  const ENABLE_ELASTIC_SCROLL = true;
+  const ENABLE_TYPO_DRAG = true;
+  const TYPO_DRAG_TRIGGER_PROGRESS = 0.985;   // testam vari likt 0.7
+  const TYPO_DRAG_COOLDOWN_MS = 1800;
 
-  const ELASTIC_TENSION_START = 0.935;
-  const ELASTIC_RELEASE_AT = 0.985;
-  const ELASTIC_REARM_BELOW = 0.915;
-  const ELASTIC_RELEASE_MS = 900;
-
-  if (ENABLE_ELASTIC_SCROLL) {
+  if (ENABLE_TYPO_DRAG) {
     const heroEl = document.querySelector(".hero");
-    const elasticLines = Array.from(document.querySelectorAll(".hero .typing-line"));
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    /*
-      All lines stay anchored to the same left edge.
-      Only the text itself stretches/compresses, like a rubber sheet or string.
-      Stronger values on the central identity lines create depth without
-      sending rows in different directions.
-    */
-    const elasticStrength = [0.070, 0.085, 0.100, 0.115, 0.130, 0.145, 0.080, 0.055];
-    const elasticSkew =     [0.7,   0.9,   1.1,   1.3,   1.5,   1.7,   0.8,   0.6];
-    const elasticDelay =    [0,     8,     14,    5,     18,    10,    22,    16];
+    let typoDragLastTrigger = 0;
+    let typoDragArmed = true;
+    let typoDragAnimating = false;
 
-    let lastY = window.scrollY || 0;
-    let lastTime = performance.now();
-    let filteredVelocity = 0;
-
-    let rafPending = false;
-    let armed = true;
-    let releasing = false;
-    let tension = 0;
-
-    function elasticClamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
-    }
-
-    function elasticSmoothstep(v) {
-      const x = elasticClamp(v, 0, 1);
-      return x * x * (3 - 2 * x);
-    }
-
-    function getElasticScrollProgress() {
-      const y = window.pageYOffset || window.scrollY || 0;
+    function getScrollProgress() {
+      const scrollTop = window.pageYOffset || window.scrollY || 0;
       const doc = document.documentElement;
       const body = document.body;
 
@@ -567,214 +620,43 @@
       );
 
       const maxScroll = Math.max(1, scrollHeight - window.innerHeight);
-      return elasticClamp(y / maxScroll, 0, 1);
+      return scrollTop / maxScroll;
     }
 
-    function mobileFactor() {
-      /*
-        iPhone/mobile keeps the same elastic character, only slightly reduced
-        so long lines do not become wider than the viewport.
-      */
-      return window.innerWidth <= 980 ? 0.78 : 1;
-    }
+    function triggerTypoDrag() {
+      const now = Date.now();
+      if (typoDragAnimating) return;
+      if (now - typoDragLastTrigger < TYPO_DRAG_COOLDOWN_MS) return;
 
-    function clearElasticInline() {
-      elasticLines.forEach((line) => {
-        line.style.transform = "";
-      });
-    }
+      typoDragLastTrigger = now;
+      typoDragAnimating = true;
 
-    function clearElasticVars() {
-      elasticLines.forEach((line) => {
-        [
-          "--elastic-start-scale", "--elastic-start-skew",
-          "--elastic-burst-scale", "--elastic-burst-skew",
-          "--elastic-recoil-scale", "--elastic-recoil-skew",
-          "--elastic-second-scale", "--elastic-second-skew",
-          "--elastic-third-scale", "--elastic-third-skew",
-          "--elastic-fourth-scale", "--elastic-fourth-skew",
-          "--elastic-delay"
-        ].forEach((prop) => line.style.removeProperty(prop));
-      });
-    }
-
-    function applyElasticTension(value) {
-      tension = value;
-
-      if (reduceMotion.matches || releasing || value <= 0) {
-        if (!releasing && value <= 0) clearElasticInline();
-        return;
-      }
-
-      const factor = mobileFactor();
-
-      elasticLines.forEach((line, index) => {
-        const strength = (elasticStrength[index] ?? elasticStrength[elasticStrength.length - 1]) * factor;
-        const skewStrength = (elasticSkew[index] ?? elasticSkew[elasticSkew.length - 1]) * factor;
-
-        /*
-          The line does not travel. It stays pinned on the left and stretches
-          in X, creating the feeling of pulling a membrane/string.
-        */
-        const scale = 1 + strength * value;
-        const skew = -skewStrength * value;
-
-        line.style.transform =
-          `scaleX(${scale.toFixed(4)}) skewX(${skew.toFixed(2)}deg)`;
-      });
-    }
-
-    function setElasticReleaseVars(line, index, startTension, boost, factor) {
-      const strength = (elasticStrength[index] ?? elasticStrength[elasticStrength.length - 1]) * factor;
-      const skewStrength = (elasticSkew[index] ?? elasticSkew[elasticSkew.length - 1]) * factor;
-
-      const startScale = 1 + strength * startTension;
-      const startSkew = -skewStrength * startTension;
-
-      /*
-        Guaranteed pluck for slow scrolling + modest velocity boost for flicks.
-        The recoil crosses through compression, then rings down like a string.
-      */
-      const burstScale = 1 + strength * 1.95 * boost;
-      const burstSkew = -skewStrength * 1.45 * boost;
-
-      const recoilScale = 1 - strength * 0.72;
-      const recoilSkew = skewStrength * 0.85;
-
-      const secondScale = 1 + strength * 0.72;
-      const secondSkew = -skewStrength * 0.48;
-
-      const thirdScale = 1 - strength * 0.19;
-      const thirdSkew = skewStrength * 0.18;
-
-      const fourthScale = 1 + strength * 0.16;
-      const fourthSkew = -skewStrength * 0.08;
-
-      const vars = {
-        "--elastic-start-scale": startScale.toFixed(4),
-        "--elastic-start-skew": `${startSkew.toFixed(2)}deg`,
-        "--elastic-burst-scale": burstScale.toFixed(4),
-        "--elastic-burst-skew": `${burstSkew.toFixed(2)}deg`,
-        "--elastic-recoil-scale": recoilScale.toFixed(4),
-        "--elastic-recoil-skew": `${recoilSkew.toFixed(2)}deg`,
-        "--elastic-second-scale": secondScale.toFixed(4),
-        "--elastic-second-skew": `${secondSkew.toFixed(2)}deg`,
-        "--elastic-third-scale": thirdScale.toFixed(4),
-        "--elastic-third-skew": `${thirdSkew.toFixed(2)}deg`,
-        "--elastic-fourth-scale": fourthScale.toFixed(4),
-        "--elastic-fourth-skew": `${fourthSkew.toFixed(2)}deg`,
-        "--elastic-delay": `${elasticDelay[index] ?? 0}ms`
-      };
-
-      Object.entries(vars).forEach(([prop, value]) => {
-        line.style.setProperty(prop, value);
-      });
-    }
-
-    function triggerElasticRelease() {
-      if (reduceMotion.matches || releasing) return;
-
-      releasing = true;
-
-      const speed = Math.abs(filteredVelocity);
-      const velocityExtra = elasticClamp((speed - 0.15) / 2.4, 0, 1);
-      const boost = 1 + velocityExtra * 0.22;
-      const factor = mobileFactor();
-
-      elasticLines.forEach((line, index) => {
-        setElasticReleaseVars(
-          line,
-          index,
-          Math.max(tension, 0.82),
-          boost,
-          factor
-        );
-      });
-
-      heroEl.classList.remove("elastic-release");
+      heroEl.classList.remove("typo-drag-active");
       void heroEl.offsetWidth;
+      heroEl.classList.add("typo-drag-active");
 
-      /*
-        Remove the direct pull and immediately let the animation start from the
-        captured stretched state. This keeps the "pluck" continuous.
-      */
-      clearElasticInline();
-      heroEl.classList.add("elastic-release");
-
-      window.setTimeout(() => {
-        heroEl.classList.remove("elastic-release");
-        clearElasticVars();
-        clearElasticInline();
-        releasing = false;
-      }, ELASTIC_RELEASE_MS);
+      setTimeout(() => {
+        heroEl.classList.remove("typo-drag-active");
+        typoDragAnimating = false;
+      }, 950);
     }
 
-    function updateElasticPhysics() {
-      rafPending = false;
+    function checkTypoDragTrigger() {
+      const progress = getScrollProgress();
 
-      if (reduceMotion.matches) {
-        heroEl.classList.remove("elastic-release");
-        clearElasticInline();
-        return;
-      }
-
-      const progress = getElasticScrollProgress();
-
-      if (progress <= ELASTIC_REARM_BELOW) {
-        armed = true;
-      }
-
-      if (!releasing) {
-        if (!armed && progress >= ELASTIC_RELEASE_AT) {
-          applyElasticTension(0);
-        } else {
-          const raw =
-            (progress - ELASTIC_TENSION_START) /
-            (ELASTIC_RELEASE_AT - ELASTIC_TENSION_START);
-
-          applyElasticTension(elasticSmoothstep(raw));
+      if (progress >= TYPO_DRAG_TRIGGER_PROGRESS) {
+        if (typoDragArmed) {
+          triggerTypoDrag();
+          typoDragArmed = false;
         }
-      }
-
-      if (progress >= ELASTIC_RELEASE_AT && armed && !releasing) {
-        triggerElasticRelease();
-        armed = false;
+      } else {
+        typoDragArmed = true;
       }
     }
 
-    function onElasticScroll() {
-      const now = performance.now();
-      const y = window.scrollY || window.pageYOffset || 0;
-      const dt = Math.max(8, now - lastTime);
-      const rawVelocity = (y - lastY) / dt;
-
-      filteredVelocity = filteredVelocity * 0.72 + rawVelocity * 0.28;
-
-      lastY = y;
-      lastTime = now;
-
-      if (!rafPending) {
-        rafPending = true;
-        requestAnimationFrame(updateElasticPhysics);
-      }
-    }
-
-    function onElasticResize() {
-      if (!rafPending) {
-        rafPending = true;
-        requestAnimationFrame(updateElasticPhysics);
-      }
-    }
-
-    if (reduceMotion.addEventListener) {
-      reduceMotion.addEventListener("change", updateElasticPhysics);
-    }
-
-    window.addEventListener("scroll", onElasticScroll, { passive: true });
-    window.addEventListener("resize", onElasticResize, { passive: true });
-    window.addEventListener("load", updateElasticPhysics);
-
-    updateElasticPhysics();
+    window.addEventListener("scroll", checkTypoDragTrigger, { passive: true });
+    window.addEventListener("resize", checkTypoDragTrigger);
+    window.addEventListener("load", checkTypoDragTrigger);
   }
 </script>
 <!---->
