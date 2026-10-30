@@ -468,8 +468,6 @@
     z-index: 9999;
     pointer-events: none;
     overflow: visible;
-    perspective: 760px;
-    transform-style: preserve-3d;
   }
 
   #glyph-pull-overlay .glyph-pull-char {
@@ -588,20 +586,31 @@
       el.className = "glyph-pull-char";
       el.textContent = glyph.char === " " ? "\u00A0" : glyph.char;
 
+      const mobile = isTouchViewport() || window.innerWidth <= 980;
+      const renderScale = mobile ? 1 : 2.75;
+
+      const baseFontPx = parseFloat(glyph.style.fontSize) || glyph.rect.height;
+      const baseLinePx = parseFloat(glyph.style.lineHeight) || glyph.rect.height;
+
+      el.dataset.renderScale = String(renderScale);
+
       el.style.left = `${glyph.rect.left}px`;
       el.style.top = `${glyph.rect.top}px`;
-      el.style.width = `${glyph.rect.width}px`;
-      el.style.height = `${glyph.rect.height}px`;
+      el.style.width = `${glyph.rect.width * renderScale}px`;
+      el.style.height = `${glyph.rect.height * renderScale}px`;
 
       el.style.fontFamily = glyph.style.fontFamily;
-      el.style.fontSize = glyph.style.fontSize;
+      el.style.fontSize = `${baseFontPx * renderScale}px`;
       el.style.fontWeight = glyph.style.fontWeight;
       el.style.fontStyle = glyph.style.fontStyle;
-      el.style.lineHeight = glyph.style.lineHeight;
+      el.style.lineHeight = `${baseLinePx * renderScale}px`;
       el.style.letterSpacing = glyph.style.letterSpacing;
       el.style.color = glyph.style.color;
       el.style.textTransform = glyph.style.textTransform;
       el.style.textDecoration = glyph.style.textDecoration;
+
+      // Anchor the oversampled glyph back onto the exact original character box.
+      el.style.transformOrigin = "0 0";
 
       return el;
     }
@@ -632,17 +641,13 @@
       const dx = vx * radial + a * scatterX + c * scatterX * 0.25;
       const dy = vy * radial * 0.62 + b * scatterY;
 
-      const baseScale = mobile ? 1.48 : 1.62;
-      const scaleVariation = mobile ? 0.32 : 0.44;
+      const baseScale = mobile ? 1.48 : 2.10;
+      const scaleVariation = mobile ? 0.32 : 0.70;
       const scale = baseScale + ((a + 1) * 0.5) * scaleVariation;
-
-      const z = mobile
-        ? 135 + ((b + 1) * 0.5) * 120
-        : 190 + ((b + 1) * 0.5) * 180;
 
       const rotate = a * (mobile ? 5.5 : 8.0);
 
-      return { dx, dy, z, scale, rotate };
+      return { dx, dy, scale, rotate };
     }
 
     function ensureOverlay() {
@@ -687,13 +692,16 @@
       glyphStates.forEach((g) => {
         const x = g.dx * p;
         const y = g.dy * p;
-        const z = g.z * p;
-        const scale = 1 + (g.scale - 1) * p;
+        const visualScale = 1 + (g.scale - 1) * p;
+        const renderScale = parseFloat(g.el.dataset.renderScale || "1");
+        const cssScale = visualScale / renderScale;
         const rotate = g.rotate * p;
 
+        // Pure 2D transform keeps text significantly sharper than perspective/
+        // translateZ scaling in Chromium while preserving the "coming closer" read.
         g.el.style.transform =
-          `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,${z.toFixed(2)}px) ` +
-          `scale(${scale.toFixed(3)}) rotate(${rotate.toFixed(2)}deg)`;
+          `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) ` +
+          `scale(${cssScale.toFixed(4)}) rotate(${rotate.toFixed(2)}deg)`;
       });
     }
 
@@ -746,33 +754,6 @@
       releaseRaf = requestAnimationFrame(frame);
     }
 
-    function flashDesktopTriggerMarker() {
-      if (isTouchViewport()) return;
-      let marker = document.getElementById("desktop-effect-marker");
-      if (!marker) {
-        marker = document.createElement("div");
-        marker.id = "desktop-effect-marker";
-        marker.textContent = "GLYPH";
-        Object.assign(marker.style, {
-          position: "fixed",
-          top: "14px",
-          right: "14px",
-          zIndex: "10001",
-          font: "600 11px/1 Arial, sans-serif",
-          letterSpacing: "0.12em",
-          color: "#fff",
-          opacity: "0.82",
-          pointerEvents: "none"
-        });
-        document.body.appendChild(marker);
-      }
-      marker.style.display = "block";
-      clearTimeout(marker._hideTimer);
-      marker._hideTimer = setTimeout(() => {
-        marker.style.display = "none";
-      }, 350);
-    }
-
     function autoPullHoldRelease() {
       if (
         autoSequenceRunning ||
@@ -781,7 +762,6 @@
       ) return;
 
       autoSequenceRunning = true;
-      flashDesktopTriggerMarker();
       if (!ensureOverlay()) {
         autoSequenceRunning = false;
         return;
