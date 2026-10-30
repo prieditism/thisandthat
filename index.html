@@ -836,7 +836,7 @@
       if (autoSequenceRunning || touchActive || touchCandidate) return false;
 
       const progress = getScrollProgress();
-      return progress >= 0.78;
+      return progress >= DESKTOP_TRIGGER_PROGRESS;
     }
 
     function triggerDesktopEffect() {
