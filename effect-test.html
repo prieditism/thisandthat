@@ -503,10 +503,8 @@
     const heroEl = document.querySelector(".hero");
     const sourceLines = Array.from(document.querySelectorAll(".hero .typing-line"));
     const coarsePointer = window.matchMedia("(pointer: coarse)");
-    const hasTouchInput = () => (navigator.maxTouchPoints || 0) > 0;
-    const isMobileTouchViewport = () =>
-      hasTouchInput() && window.innerWidth <= 980;
-    const isTouchViewport = () => isMobileTouchViewport();
+    const isTouchViewport = () =>
+      (navigator.maxTouchPoints || 0) > 0 && window.innerWidth <= 980;
 
     let overlayEl = null;
     let glyphStates = [];
@@ -524,8 +522,6 @@
     let touchGestureLastY = 0;
     let mobileMomentumRaf = 0;
     let currentPull = 0;
-    let mobileArrivalArmed = true;
-    let mobileArrivalRunning = false;
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -593,7 +589,7 @@
       el.className = "glyph-pull-char";
       el.textContent = glyph.char === " " ? "\u00A0" : glyph.char;
 
-      const mobile = window.innerWidth <= 980;
+      const mobile = isTouchViewport() || window.innerWidth <= 980;
       const renderScale = mobile ? 1 : 2.75;
 
       const baseFontPx = parseFloat(glyph.style.fontSize) || glyph.rect.height;
@@ -618,7 +614,6 @@
 
       // Anchor the oversampled glyph back onto the exact original character box.
       el.style.transformOrigin = "0 0";
-      el.style.transform = `scale(${(1 / renderScale).toFixed(4)})`;
 
       return el;
     }
@@ -716,7 +711,6 @@
     function cleanupGlyphPull() {
       cancelAnimationFrame(releaseRaf);
       cancelAnimationFrame(autoRaf);
-      stopMobileMomentumWatch();
       releaseRaf = 0;
       autoRaf = 0;
 
@@ -729,7 +723,6 @@
       currentPull = 0;
       glyphPullRunning = false;
       autoSequenceRunning = false;
-      mobileArrivalRunning = false;
       heroEl.classList.remove("glyph-pull-source-hidden");
     }
 
@@ -810,10 +803,11 @@
     let lastDesktopY = window.scrollY || 0;
 
     function desktopShouldTrigger() {
-      if (window.innerWidth <= 980) return false;
+      if (isTouchViewport()) return false;
       if (autoSequenceRunning || touchActive) return false;
 
-      return getScrollProgress() >= 0.78;
+      const progress = getScrollProgress();
+      return progress >= 0.78;
     }
 
     function triggerDesktopEffect() {
@@ -823,7 +817,7 @@
     }
 
     function handleDesktopScroll() {
-      if (window.innerWidth <= 980) return;
+      if (isTouchViewport()) return;
 
       const y = window.scrollY || window.pageYOffset || 0;
       const movingDown = y > lastDesktopY + 1;
@@ -843,7 +837,7 @@
     window.addEventListener(
       "wheel",
       (event) => {
-        if (window.innerWidth <= 980) return;
+        if (isTouchViewport()) return;
         if (event.deltaY > 0 && getScrollProgress() >= 0.72) {
           triggerDesktopEffect();
         }
@@ -851,8 +845,9 @@
       { passive: true }
     );
 
+    // Keyboard/PageDown/End fallback.
     window.addEventListener("keydown", (event) => {
-      if (window.innerWidth <= 980) return;
+      if (isTouchViewport()) return;
       if (
         ["ArrowDown", "PageDown", "End", " "].includes(event.key) &&
         getScrollProgress() >= 0.72
@@ -865,73 +860,6 @@
       lastDesktopY = window.scrollY || 0;
     });
 
-    function mobileAutoArrival() {
-      if (
-        !isMobileTouchViewport() ||
-        touchActive ||
-        touchCandidate ||
-        glyphPullRunning ||
-        mobileArrivalRunning
-      ) return;
-
-      mobileArrivalRunning = true;
-
-      if (!ensureOverlay()) {
-        mobileArrivalRunning = false;
-        return;
-      }
-
-      const start = performance.now();
-      const pullMs = 145;
-      const holdMs = 120;
-
-      function frame(now) {
-        const elapsed = now - start;
-
-        if (elapsed <= pullMs) {
-          const t = clamp(elapsed / pullMs, 0, 1);
-          const fastEase = 1 - Math.pow(1 - t, 3);
-          setPullProgress(fastEase);
-          autoRaf = requestAnimationFrame(frame);
-          return;
-        }
-
-        setPullProgress(1);
-
-        if (elapsed < pullMs + holdMs) {
-          autoRaf = requestAnimationFrame(frame);
-          return;
-        }
-
-        autoRaf = 0;
-        mobileArrivalRunning = false;
-        springRelease(1);
-      }
-
-      autoRaf = requestAnimationFrame(frame);
-    }
-
-    function handleMobileScrollArrival() {
-      if (!isMobileTouchViewport()) return;
-
-      const progress = getScrollProgress();
-
-      if (
-        progress >= 0.93 &&
-        mobileArrivalArmed &&
-        !touchActive &&
-        !touchCandidate &&
-        !glyphPullRunning
-      ) {
-        mobileArrivalArmed = false;
-        mobileAutoArrival();
-      } else if (progress <= 0.82) {
-        mobileArrivalArmed = true;
-      }
-    }
-
-    window.addEventListener("scroll", handleMobileScrollArrival, { passive: true });
-
     function stopMobileMomentumWatch() {
       if (mobileMomentumRaf) {
         cancelAnimationFrame(mobileMomentumRaf);
@@ -940,7 +868,7 @@
     }
 
     function watchMobileMomentumArrival() {
-      if (!isMobileTouchViewport()) return;
+      if (!isTouchViewport()) return;
 
       stopMobileMomentumWatch();
 
@@ -948,7 +876,7 @@
       const timeoutMs = 1100;
 
       function frame(now) {
-        if (!mobileArrivalArmed || glyphPullRunning || touchActive) {
+        if (glyphPullRunning || touchActive) {
           mobileMomentumRaf = 0;
           return;
         }
@@ -956,9 +884,8 @@
         const progress = getScrollProgress();
 
         if (progress >= 0.80) {
-          mobileArrivalArmed = false;
           mobileMomentumRaf = 0;
-          mobileAutoArrival();
+          autoPullHoldRelease();
           return;
         }
 
@@ -975,7 +902,7 @@
     window.addEventListener(
       "touchstart",
       (event) => {
-        if (!hasTouchInput()) return;
+        if (!isTouchViewport()) return;
         if (event.touches.length !== 1) return;
 
         stopMobileMomentumWatch();
@@ -983,10 +910,12 @@
         touchStartProgress = getScrollProgress();
         touchGestureStartY = event.touches[0].clientY;
         touchGestureLastY = touchGestureStartY;
-        touchCandidate =
-          touchStartProgress >= (window.innerWidth <= 980 ? 0.52 : 0.72);
+        touchCandidate = touchStartProgress >= 0.52;
         touchActive = false;
-        touchStartY = touchGestureStartY;
+
+        if (touchCandidate) {
+          touchStartY = event.touches[0].clientY;
+        }
       },
       { passive: true }
     );
@@ -1008,14 +937,9 @@
         if (
           !touchActive &&
           upwardPull > 5 &&
-          (
-            liveProgress >= (window.innerWidth <= 980 ? TOUCH_ARM_PROGRESS : 0.72) ||
-            touchStartProgress >= (window.innerWidth <= 980 ? TOUCH_ARM_PROGRESS : 0.72)
-          )
+          (liveProgress >= TOUCH_ARM_PROGRESS || touchStartProgress >= TOUCH_ARM_PROGRESS)
         ) {
           touchActive = true;
-          stopMobileMomentumWatch();
-          mobileArrivalArmed = false;
           // Rebase the gesture at the activation point so the pull begins
           // immediately and naturally instead of jumping to a large value.
           touchStartY = y + 5;
@@ -1026,9 +950,7 @@
 
         event.preventDefault();
 
-        const touchDistance =
-          window.innerWidth <= 980 ? TOUCH_PULL_DISTANCE : 120;
-        const pull = clamp((touchStartY - y) / touchDistance, 0, 1);
+        const pull = clamp((touchStartY - y) / TOUCH_PULL_DISTANCE, 0, 1);
         setPullProgress(pull);
         // Holding the finger in place simply leaves this exact transform frozen.
       },
@@ -1036,7 +958,6 @@
     );
 
     function finishTouchPull() {
-      const wasCandidate = touchCandidate;
       const wasActive = touchActive;
       const upwardSwipe = touchGestureStartY - touchGestureLastY;
 
@@ -1049,14 +970,11 @@
       }
 
       if (
-        isMobileTouchViewport() &&
+        isTouchViewport() &&
         upwardSwipe > 24 &&
-        !glyphPullRunning &&
-        mobileArrivalArmed
+        !glyphPullRunning
       ) {
         watchMobileMomentumArrival();
-      } else if (!wasCandidate) {
-        stopMobileMomentumWatch();
       }
     }
 
